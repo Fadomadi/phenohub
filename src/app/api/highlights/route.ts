@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { getClientLikeId } from "@/lib/likes";
 import { mockCultivars, mockProviders, mockReports, mockSeeds } from "@/data/mockData";
-import type { Prisma } from "@/generated/prisma";
 
 const TAKE = 6;
 
@@ -14,29 +13,6 @@ const hasSessionUser = (
   value: AuthSession | null,
 ): value is AuthSession & { user: { id?: string | null } } =>
   Boolean(value && typeof value === "object" && "user" in value);
-
-type CultivarWithOfferings = Prisma.CultivarGetPayload<{
-  include: {
-    offerings: {
-      include: {
-        provider: {
-          select: {
-            name: true;
-            slug: true;
-          };
-        };
-      };
-    };
-  };
-}>;
-
-type ProviderRecord = Prisma.ProviderGetPayload<Prisma.ProviderDefaultArgs>;
-type ReportRecord = Prisma.ReportGetPayload<{
-  include: {
-    cultivar: { select: { name: true; slug: true } };
-    provider: { select: { name: true; slug: true } };
-  };
-}>;
 
 type ReportHighlight = {
   id: number;
@@ -61,7 +37,58 @@ type ReportHighlight = {
   excerpt: string | null;
 };
 
-const mapCultivar = (cultivar: CultivarWithOfferings) => ({
+type CultivarInput = {
+  id: number;
+  slug: string;
+  name: string;
+  aka: string[];
+  cloneOnly: boolean | null;
+  reportCount: number;
+  avgRating?: unknown;
+  imageCount: number;
+  trending?: unknown;
+  thumbnails?: unknown;
+  breeder: string | null;
+  offerings?: Array<{
+    provider?: { name?: string | null; slug?: string | null } | null;
+    priceEur?: unknown;
+    category?: string | null;
+  }> | null;
+};
+
+type ProviderInput = {
+  id: number;
+  slug: string;
+  name: string;
+  country: string | null;
+  countryFlag: string | null;
+  avgScore: unknown;
+  reportCount: number;
+  shippingScore: unknown;
+  vitalityScore: unknown;
+};
+
+type ReportInput = {
+  id: number;
+  title: string;
+  cultivar?: { name: string; slug: string } | null;
+  provider?: { name: string; slug: string } | null;
+  authorHandle?: string | null;
+  shipping?: unknown;
+  vitality?: unknown;
+  stability?: unknown;
+  overall?: unknown;
+  status?: string | null;
+  images: string[];
+  publishedAt?: Date | null;
+  createdAt: Date;
+  likes: number;
+  comments: number;
+  views: number;
+  excerpt?: string | null;
+};
+
+const mapCultivar = (cultivar: CultivarInput) => ({
   id: cultivar.id,
   slug: cultivar.slug,
   name: cultivar.name,
@@ -84,7 +111,7 @@ const mapCultivar = (cultivar: CultivarWithOfferings) => ({
   })),
 });
 
-const mapProvider = (provider: ProviderRecord) => ({
+const mapProvider = (provider: ProviderInput) => ({
   id: provider.id,
   slug: provider.slug,
   name: provider.name,
@@ -96,7 +123,7 @@ const mapProvider = (provider: ProviderRecord) => ({
   vitalityScore: Number(provider.vitalityScore),
 });
 
-const mapReport = (report: ReportRecord, liked = false): ReportHighlight => ({
+const mapReport = (report: ReportInput, liked = false): ReportHighlight => ({
   id: report.id,
   title: report.title,
   cultivar: report.cultivar?.name ?? "",
@@ -274,18 +301,22 @@ export async function GET() {
         try {
           const likes = await prisma.reportLike.findMany({
             where: {
-              reportId: { in: reports.map((report) => report.id) },
+              reportId: { in: reports.map((report: ReportInput) => report.id) },
               OR: orConditions,
             },
           });
-          likedIds = new Set(likes.map((like) => like.reportId));
+          likedIds = new Set(
+            likes.map((like: { reportId: number }) => like.reportId),
+          );
         } catch (error) {
           console.warn("[HIGHLIGHTS_API] likes lookup failed", error);
         }
       }
     }
 
-    reportsPayload = reports.map((report) => mapReport(report, likedIds.has(report.id)));
+    reportsPayload = reports.map((report: ReportInput) =>
+      mapReport(report, likedIds.has(report.id)),
+    );
   } else {
     console.error("[HIGHLIGHTS_API] reports query failed – using mock data", reportsResult.reason);
     reportsPayload = mockReports.slice(0, TAKE).map(mapMockReport);

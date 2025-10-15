@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { ReportStatus as ReportStatusEnum } from "@/generated/prisma";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { recalcAllMetrics } from "@/lib/metrics";
@@ -30,8 +29,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "Report nicht gefunden." }, { status: 404 });
   }
 
-  type ReportStatusValue = (typeof ReportStatusEnum)[keyof typeof ReportStatusEnum];
-  const normalizedStatus = status.toUpperCase() as ReportStatusValue;
+  type ModeratedStatus = "PENDING" | "PUBLISHED" | "REJECTED";
+  const normalizedStatus = status.toUpperCase() as ModeratedStatus;
   const moderatorId = auth.session.user.id ? Number(auth.session.user.id) : undefined;
   const moderatedAt = new Date();
 

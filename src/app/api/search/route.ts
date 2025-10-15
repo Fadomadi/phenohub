@@ -4,7 +4,6 @@ import { mockCultivars, mockProviders, mockReports } from "@/data/mockData";
 import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { getClientLikeId } from "@/lib/likes";
-import type { Prisma } from "@/generated/prisma";
 
 type AuthSession = Awaited<ReturnType<typeof getServerSession>>;
 
@@ -13,27 +12,44 @@ const hasSessionUser = (
 ): value is AuthSession & { user: { id?: string | null } } =>
   Boolean(value && typeof value === "object" && "user" in value);
 
-type CultivarWithOfferings = Prisma.CultivarGetPayload<{
-  include: {
-    offerings: {
-      include: {
-        provider: {
-          select: {
-            name: true;
-            slug: true;
-          };
-        };
-      };
-    };
-  };
-}>;
+type CultivarWithOfferings = {
+  id: number;
+  slug: string;
+  name: string;
+  aka: string[];
+  cloneOnly: boolean | null;
+  reportCount: number;
+  avgRating: unknown;
+  imageCount: number;
+  trending: unknown;
+  thumbnails: unknown;
+  breeder: string | null;
+  offerings?: Array<{
+    provider?: { name?: string | null; slug?: string | null } | null;
+    priceEur?: unknown;
+    category?: string | null;
+  }> | null;
+};
 
-type ReportWithRelations = Prisma.ReportGetPayload<{
-  include: {
-    cultivar: { select: { name: true; slug: true } };
-    provider: { select: { name: true; slug: true } };
-  };
-}>;
+type ReportWithRelations = {
+  id: number;
+  title: string;
+  cultivar: { name: string; slug: string };
+  provider: { name: string; slug: string };
+  authorHandle?: string | null;
+  shipping?: unknown;
+  vitality?: unknown;
+  stability?: unknown;
+  overall?: unknown;
+  status?: string | null;
+  images: string[];
+  publishedAt?: Date | null;
+  createdAt: Date;
+  likes: number;
+  comments: number;
+  views: number;
+  excerpt?: string | null;
+};
 
 const toCultivar = (cultivar: CultivarWithOfferings) => ({
   id: cultivar.id,
@@ -165,11 +181,13 @@ export async function GET(request: Request) {
         try {
           const likes = await prisma.reportLike.findMany({
             where: {
-              reportId: { in: reports.map((report) => report.id) },
+              reportId: { in: reports.map((report: ReportWithRelations) => report.id) },
               OR: orConditions,
             },
           });
-          likedIds = new Set(likes.map((like) => like.reportId));
+          likedIds = new Set(
+            likes.map((like: { reportId: number }) => like.reportId),
+          );
         } catch (error) {
           console.warn("[SEARCH_API] reportLike lookup failed – skipping likedIds resolution", error);
         }

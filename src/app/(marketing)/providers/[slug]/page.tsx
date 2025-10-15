@@ -21,6 +21,10 @@ const toOneDecimal = (value: number) =>
 type ProviderPageParams = { slug: string };
 type ProviderPageProps = { params: Promise<ProviderPageParams> };
 
+type ProviderWithOfferings = NonNullable<
+  Awaited<ReturnType<typeof prisma.provider.findUnique>>
+>;
+
 const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
   const { slug } = await params;
 
@@ -47,14 +51,16 @@ const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
     notFound();
   }
 
+  const typedProvider: ProviderWithOfferings = provider;
+
   const [reportMetrics, recentReports] = await Promise.all([
     prisma.report.aggregate({
-      where: { providerId: provider.id },
+      where: { providerId: typedProvider.id },
       _avg: { overall: true, shipping: true, vitality: true, stability: true },
       _count: true,
     }),
     prisma.report.findMany({
-      where: { providerId: provider.id },
+      where: { providerId: typedProvider.id },
       include: {
         cultivar: { select: { name: true, slug: true } },
         provider: { select: { name: true, slug: true } },
@@ -64,7 +70,9 @@ const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
     }),
   ]);
 
-  const recentReportCards: Report[] = recentReports.map((report) => ({
+  type RecentReport = (typeof recentReports)[number];
+
+  const recentReportCards: Report[] = recentReports.map((report: RecentReport) => ({
     id: report.id,
     title: report.title,
     cultivar: report.cultivar.name,
@@ -86,33 +94,44 @@ const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
   }));
 
   const avgOverall =
-    provider.avgScore !== null && provider.avgScore !== undefined
-      ? toOneDecimal(Number(provider.avgScore))
+    typedProvider.avgScore !== null && typedProvider.avgScore !== undefined
+      ? toOneDecimal(Number(typedProvider.avgScore))
       : toOneDecimal(Number(reportMetrics._avg.overall ?? 0));
   const avgShipping =
-    provider.shippingScore !== null && provider.shippingScore !== undefined
-      ? toOneDecimal(Number(provider.shippingScore))
+    typedProvider.shippingScore !== null && typedProvider.shippingScore !== undefined
+      ? toOneDecimal(Number(typedProvider.shippingScore))
       : toOneDecimal(Number(reportMetrics._avg.shipping ?? 0));
   const avgVitality =
-    provider.vitalityScore !== null && provider.vitalityScore !== undefined
-      ? toOneDecimal(Number(provider.vitalityScore))
+    typedProvider.vitalityScore !== null && typedProvider.vitalityScore !== undefined
+      ? toOneDecimal(Number(typedProvider.vitalityScore))
       : toOneDecimal(Number(reportMetrics._avg.vitality ?? 0));
   const avgStability = toOneDecimal(Number(reportMetrics._avg.stability ?? 0));
   const reportCount = reportMetrics._count ?? 0;
   const scoreDisplay = (value: number) =>
     reportCount > 0 && Number.isFinite(value) ? value.toFixed(1) : "–";
 
-  const offerings = provider.offerings.map((offering) => ({
-    id: offering.id,
-    cultivarName: offering.cultivar?.name ?? "Unbekannte Sorte",
-    cultivarSlug: offering.cultivar?.slug ?? undefined,
-    breeder: offering.cultivar?.breeder ?? null,
-    price:
-      offering.priceEur !== null && offering.priceEur !== undefined
-        ? Number(offering.priceEur)
-        : null,
-    category: offering.category ?? null,
-  }));
+  type OfferingCard = {
+    id: number;
+    cultivarName: string;
+    cultivarSlug?: string;
+    breeder: string | null;
+    price: number | null;
+    category: string | null;
+  };
+
+  const offerings: OfferingCard[] = typedProvider.offerings.map(
+    (offering: ProviderWithOfferings["offerings"][number]) => ({
+      id: offering.id,
+      cultivarName: offering.cultivar?.name ?? "Unbekannte Sorte",
+      cultivarSlug: offering.cultivar?.slug ?? undefined,
+      breeder: offering.cultivar?.breeder ?? null,
+      price:
+        offering.priceEur !== null && offering.priceEur !== undefined
+          ? Number(offering.priceEur)
+          : null,
+      category: offering.category ?? null,
+    }),
+  );
 
   const uniqueCultivars = new Set(
     offerings

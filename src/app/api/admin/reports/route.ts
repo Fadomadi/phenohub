@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { ReportStatus as ReportStatusEnum } from "@/generated/prisma";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
+
+const MODERATED_STATUSES = new Set(["PENDING", "PUBLISHED", "REJECTED"]);
 
 export async function GET(request: Request) {
   const auth = await requireAdmin();
@@ -13,9 +14,10 @@ export async function GET(request: Request) {
   const statusParam = searchParams.get("status");
   const status = statusParam ? statusParam.toUpperCase() : null;
 
+  type ModeratedStatus = "PENDING" | "PUBLISHED" | "REJECTED";
   const normalizedStatus =
-    status && status !== "ALL" && status in ReportStatusEnum
-      ? ReportStatusEnum[status as keyof typeof ReportStatusEnum]
+    status && status !== "ALL" && MODERATED_STATUSES.has(status)
+      ? (status as ModeratedStatus)
       : undefined;
 
   const where: NonNullable<Parameters<typeof prisma.report.findMany>[0]>["where"] =

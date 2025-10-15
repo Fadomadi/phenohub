@@ -27,7 +27,7 @@ export async function GET(
   });
 
   return NextResponse.json({
-    comments: comments.map((comment) => ({
+    comments: comments.map((comment: typeof comments[number]) => ({
       id: comment.id,
       reportId: comment.reportId,
       userId: comment.userId,
