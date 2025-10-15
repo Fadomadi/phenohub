@@ -1,4 +1,4 @@
-import { PrismaClient } from "../src/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import { recalcAllMetrics } from "./lib/metrics";
 
 const parseIds = (): number[] => {
@@ -88,4 +88,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-
