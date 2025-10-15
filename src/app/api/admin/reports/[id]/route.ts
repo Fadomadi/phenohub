@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import type { Prisma, $Enums } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
+import { $Enums } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { recalcAllMetrics } from "@/lib/metrics";
 
-type ReportStatus = $Enums.ReportStatus;
-
-const MODERATED_STATUSES = new Set<ReportStatus>(["PENDING", "PUBLISHED", "REJECTED"]);
+const MODERATED_STATUSES = new Set<$Enums.ReportStatus>(["PENDING", "PUBLISHED", "REJECTED"]);
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -27,7 +26,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "Ungültiger Status." }, { status: 400 });
   }
 
-  const statusCandidate = status.toUpperCase() as ReportStatus;
+  const statusCandidate = status.toUpperCase() as $Enums.ReportStatus;
   if (!MODERATED_STATUSES.has(statusCandidate)) {
     return NextResponse.json({ error: "Ungültiger Status." }, { status: 400 });
   }

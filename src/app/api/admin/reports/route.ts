@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import type { Prisma, $Enums } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
+import { $Enums } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 
