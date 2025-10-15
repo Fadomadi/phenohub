@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 
@@ -21,9 +20,7 @@ export async function GET(request: Request) {
   const normalizedStatus: ModeratedStatus | undefined =
     status && status !== "ALL" && isModeratedStatus(status) ? status : undefined;
 
-  const where: Prisma.ReportWhereInput | undefined = normalizedStatus
-    ? { status: normalizedStatus }
-    : undefined;
+  const where = normalizedStatus ? { status: normalizedStatus } : undefined;
 
   const reports = await prisma.report.findMany({
     where,
