@@ -734,7 +734,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
 
   const paragraphs = (report.content ?? "")
     .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
+    .map((paragraph: string) => paragraph.trim())
     .filter(
       (paragraph) =>
         Boolean(paragraph) &&
