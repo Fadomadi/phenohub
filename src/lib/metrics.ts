@@ -1,4 +1,4 @@
-import type { PrismaClient } from "../generated/prisma";
+import type { PrismaClient } from "@prisma/client";
 
 const toOneDecimal = (value: number) =>
   Number.isFinite(value) ? Math.round(value * 10) / 10 : 0;

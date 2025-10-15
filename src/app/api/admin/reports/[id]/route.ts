@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import type { Prisma, ReportStatus } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { recalcAllMetrics } from "@/lib/metrics";
 
-const MODERATED_STATUSES = new Set(["PENDING", "PUBLISHED", "REJECTED"]);
+const MODERATED_STATUSES = new Set<ReportStatus>(["PENDING", "PUBLISHED", "REJECTED"]);
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -20,7 +21,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const body = await request.json().catch(() => ({}));
   const { status, reviewNote } = body ?? {};
 
-  if (typeof status !== "string" || !MODERATED_STATUSES.has(status.toUpperCase())) {
+  if (typeof status !== "string") {
+    return NextResponse.json({ error: "Ungültiger Status." }, { status: 400 });
+  }
+
+  const statusCandidate = status.toUpperCase() as ReportStatus;
+  if (!MODERATED_STATUSES.has(statusCandidate)) {
     return NextResponse.json({ error: "Ungültiger Status." }, { status: 400 });
   }
 
@@ -29,12 +35,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "Report nicht gefunden." }, { status: 404 });
   }
 
-  type ModeratedStatus = "PENDING" | "PUBLISHED" | "REJECTED";
-  const normalizedStatus = status.toUpperCase() as ModeratedStatus;
+  const normalizedStatus = statusCandidate;
   const moderatorId = auth.session.user.id ? Number(auth.session.user.id) : undefined;
   const moderatedAt = new Date();
 
-  const updateData: Parameters<typeof prisma.report.update>[0]["data"] = {
+  const updateData: Prisma.ReportUncheckedUpdateInput = {
     status: normalizedStatus,
     reviewNote: typeof reviewNote === "string" ? reviewNote : null,
     moderatedAt,

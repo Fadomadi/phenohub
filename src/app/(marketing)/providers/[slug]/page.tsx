@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Prisma } from "@prisma/client";
 import {
   ArrowLeft,
   Leaf,
@@ -21,37 +22,39 @@ const toOneDecimal = (value: number) =>
 type ProviderPageParams = { slug: string };
 type ProviderPageProps = { params: Promise<ProviderPageParams> };
 
-type ProviderWithOfferings = NonNullable<
-  Awaited<ReturnType<typeof prisma.provider.findUnique>>
->;
+const providerInclude = {
+  offerings: {
+    orderBy: { priceEur: "asc" },
+    include: {
+      cultivar: {
+        select: {
+          name: true,
+          slug: true,
+          breeder: true,
+          thumbnails: true,
+        },
+      },
+    },
+  },
+} as const;
+
+type ProviderWithOfferings = Prisma.ProviderGetPayload<{
+  include: typeof providerInclude;
+}>;
 
 const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
   const { slug } = await params;
 
   const provider = await prisma.provider.findUnique({
     where: { slug },
-    include: {
-      offerings: {
-        orderBy: { priceEur: "asc" },
-        include: {
-          cultivar: {
-            select: {
-              name: true,
-              slug: true,
-              breeder: true,
-              thumbnails: true,
-            },
-          },
-        },
-      },
-    },
+    include: providerInclude,
   });
 
   if (!provider) {
     notFound();
   }
 
-  const typedProvider: ProviderWithOfferings = provider;
+  const typedProvider = provider as ProviderWithOfferings;
 
   const [reportMetrics, recentReports] = await Promise.all([
     prisma.report.aggregate({

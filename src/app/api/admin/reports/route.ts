@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import type { Prisma, ReportStatus } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 
-const MODERATED_STATUSES = new Set(["PENDING", "PUBLISHED", "REJECTED"]);
+const MODERATED_STATUSES = new Set<ReportStatus>(["PENDING", "PUBLISHED", "REJECTED"]);
 
 export async function GET(request: Request) {
   const auth = await requireAdmin();
@@ -14,14 +15,14 @@ export async function GET(request: Request) {
   const statusParam = searchParams.get("status");
   const status = statusParam ? statusParam.toUpperCase() : null;
 
-  type ModeratedStatus = "PENDING" | "PUBLISHED" | "REJECTED";
   const normalizedStatus =
-    status && status !== "ALL" && MODERATED_STATUSES.has(status)
-      ? (status as ModeratedStatus)
+    status && status !== "ALL" && MODERATED_STATUSES.has(status as ReportStatus)
+      ? (status as ReportStatus)
       : undefined;
 
-  const where: NonNullable<Parameters<typeof prisma.report.findMany>[0]>["where"] =
-    normalizedStatus ? { status: normalizedStatus } : undefined;
+  const where: Prisma.ReportWhereInput | undefined = normalizedStatus
+    ? { status: normalizedStatus }
+    : undefined;
 
   const reports = await prisma.report.findMany({
     where,
