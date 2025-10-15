@@ -491,60 +491,89 @@ const toGalleryImages = (report: ReportSummary): ParsedGalleryEntry[] => {
         )
       : [];
 
-  const parsedFromGallery: ParsedGalleryEntry[] = Array.isArray(fromGallery)
+  const parsedFromGallery = Array.isArray(fromGallery)
     ? (fromGallery as unknown[])
-        .map((entry) => {
-          if (!entry || typeof entry !== "object") return null;
+        .flatMap((entry) => {
+          if (!entry || typeof entry !== "object") {
+            return [];
+          }
+
           const record = entry as Record<string, unknown>;
           const directUrl = typeof record.directUrl === "string" ? record.directUrl : null;
-          if (!directUrl) return null;
+          if (!directUrl) {
+            return [];
+          }
 
           const previewUrl = typeof record.previewUrl === "string" ? record.previewUrl : undefined;
           const normalized = normalizeTmpfilesUrl(directUrl);
+          const normalizedPreview =
+            typeof normalized.preview === "string" && normalized.preview.startsWith("http")
+              ? normalized.preview
+              : undefined;
+          const previewCandidate =
+            previewUrl && previewUrl.startsWith("http") ? previewUrl : normalizedPreview;
 
-          return {
+          const normalizedEntry: ParsedGalleryEntry = {
             direct:
               normalized.direct && normalized.direct.startsWith("http")
                 ? normalized.direct
                 : directUrl,
-            preview:
-              previewUrl && previewUrl.startsWith("http")
-                ? previewUrl
-                : normalized.preview,
-            original: typeof record.originalFileName === "string" ? record.originalFileName : directUrl,
+            original:
+              typeof record.originalFileName === "string" && record.originalFileName.trim().length > 0
+                ? record.originalFileName
+                : directUrl,
             alt,
           };
+
+          if (previewCandidate) {
+            normalizedEntry.preview = previewCandidate;
+          }
+
+          return [normalizedEntry];
         })
-        .filter((value): value is ParsedGalleryEntry => Boolean(value))
     : [];
 
   if (parsedFromGallery.length > 0) {
     return parsedFromGallery;
   }
 
-  const fallbackImages = (report.images ?? []).map((img) => {
-    if (typeof img !== "string" || !img.trim()) return null;
-    const normalized = normalizeTmpfilesUrl(img);
-    const direct =
-      typeof normalized.direct === "string" && normalized.direct.startsWith("http")
-        ? normalized.direct
-        : img.startsWith("http")
-          ? img
-          : null;
-    if (!direct) return null;
+  const fallbackImages = (report.images ?? [])
+    .flatMap((img) => {
+      if (typeof img !== "string" || !img.trim()) {
+        return [];
+      }
 
-    return {
-      direct,
-      preview:
+      const normalized = normalizeTmpfilesUrl(img);
+      const direct =
+        typeof normalized.direct === "string" && normalized.direct.startsWith("http")
+          ? normalized.direct
+          : img.startsWith("http")
+            ? img
+            : null;
+
+      if (!direct) {
+        return [];
+      }
+
+      const normalizedPreview =
         typeof normalized.preview === "string" && normalized.preview.startsWith("http")
           ? normalized.preview
-          : undefined,
-      original: img,
-      alt,
-    };
-  });
+          : undefined;
 
-  return fallbackImages.filter((value): value is ParsedGalleryEntry => Boolean(value));
+      const entry: ParsedGalleryEntry = {
+        direct,
+        original: img,
+        alt,
+      };
+
+      if (normalizedPreview) {
+        entry.preview = normalizedPreview;
+      }
+
+      return [entry];
+    });
+
+  return fallbackImages;
 };
 
 const ReportDetailsModal = ({

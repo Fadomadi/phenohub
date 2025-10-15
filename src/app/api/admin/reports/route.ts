@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ReportStatus as ReportStatusEnum } from "@/generated/prisma";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 
@@ -12,7 +13,13 @@ export async function GET(request: Request) {
   const statusParam = searchParams.get("status");
   const status = statusParam ? statusParam.toUpperCase() : null;
 
-  const where = status && status !== "ALL" ? { status } : {};
+  const normalizedStatus =
+    status && status !== "ALL" && status in ReportStatusEnum
+      ? ReportStatusEnum[status as keyof typeof ReportStatusEnum]
+      : undefined;
+
+  const where: NonNullable<Parameters<typeof prisma.report.findMany>[0]>["where"] =
+    normalizedStatus ? { status: normalizedStatus } : undefined;
 
   const reports = await prisma.report.findMany({
     where,

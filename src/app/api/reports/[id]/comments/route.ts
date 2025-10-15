@@ -3,12 +3,15 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 
+type RouteParams = { id: string };
+
 export async function GET(
   request: Request,
-  context: { params: { id: string } },
+  context: { params: Promise<RouteParams> },
 ) {
+  const params = await context.params;
   const reportCommentClient = prisma.reportComment;
-  const reportId = Number(context.params.id);
+  const reportId = Number(params.id);
   if (Number.isNaN(reportId)) {
     return NextResponse.json({ error: "Ungültige Report-ID." }, { status: 400 });
   }
@@ -37,8 +40,9 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  context: { params: { id: string } },
+  context: { params: Promise<RouteParams> },
 ) {
+  const params = await context.params;
   const reportCommentClient = prisma.reportComment;
   const session = await getServerSession(authConfig);
   if (!session?.user?.id) {
@@ -50,7 +54,7 @@ export async function POST(
     return NextResponse.json({ error: "Kommentare derzeit nicht verfügbar." }, { status: 503 });
   }
 
-  const reportId = Number(context.params.id);
+  const reportId = Number(params.id);
   if (Number.isNaN(reportId)) {
     return NextResponse.json({ error: "Ungültige Report-ID." }, { status: 400 });
   }

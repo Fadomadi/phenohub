@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
+import { ReportStatus as ReportStatusEnum } from "@/generated/prisma";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { recalcAllMetrics } from "@/lib/metrics";
 
 const MODERATED_STATUSES = new Set(["PENDING", "PUBLISHED", "REJECTED"]);
 
-type RouteParams = Promise<{ params: { id: string } }>;
-
-export async function PATCH(
-  request: Request,
-  context: RouteParams,
-) {
-  const { params } = await context;
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if (!auth.ok || !auth.session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: auth.status });
@@ -34,11 +30,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Report nicht gefunden." }, { status: 404 });
   }
 
-  const normalizedStatus = status.toUpperCase();
+  type ReportStatusValue = (typeof ReportStatusEnum)[keyof typeof ReportStatusEnum];
+  const normalizedStatus = status.toUpperCase() as ReportStatusValue;
   const moderatorId = auth.session.user.id ? Number(auth.session.user.id) : undefined;
   const moderatedAt = new Date();
 
-  const updateData = {
+  const updateData: Parameters<typeof prisma.report.update>[0]["data"] = {
     status: normalizedStatus,
     reviewNote: typeof reviewNote === "string" ? reviewNote : null,
     moderatedAt,
@@ -47,7 +44,7 @@ export async function PATCH(
       normalizedStatus === "PUBLISHED"
         ? report.publishedAt ?? moderatedAt
         : null,
-  } as const;
+  };
 
   const updated = await prisma.report.update({
     where: { id: reportId },
@@ -71,9 +68,8 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  context: RouteParams,
+  { params }: { params: { id: string } },
 ) {
-  const { params } = await context;
   const auth = await requireAdmin();
   if (!auth.ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: auth.status });

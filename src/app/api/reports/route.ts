@@ -226,21 +226,22 @@ export async function POST(request: Request) {
         content: `${summary}\n\nSetup:\n- Watt: ${normalizedLampType || "keine Angabe"}\n- Zelt: ${normalizedTentSize || "keine Angabe"}\n- Medium: ${normalizedMedium || "keine Angabe"}`,
         authorHandle: finalAuthorHandle || "@community",
         images: savedImages,
-        gallery:
-          successfulUploads.length > 0
-            ? successfulUploads.map((upload) => ({
+        ...(successfulUploads.length > 0
+          ? {
+              gallery: successfulUploads.map((upload) => ({
                 directUrl: upload.directUrl,
                 previewUrl: upload.previewUrl,
                 provider: upload.provider,
                 key: upload.key,
                 originalFileName: upload.originalFileName,
-              }))
-            : null,
+              })),
+            }
+          : {}),
         shipping: shippingRating,
         stability: stabilityRating,
         vitality: growthRating,
         overall: overallRating,
-        additionalInfo,
+        ...(additionalInfo ? { additionalInfo } : {}),
         status: "PENDING",
         publishedAt: null,
         cultivar: { connect: { slug: cultivarSlug } },

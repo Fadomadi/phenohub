@@ -4,7 +4,14 @@ import { mockCultivars, mockProviders, mockReports } from "@/data/mockData";
 import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { getClientLikeId } from "@/lib/likes";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma";
+
+type AuthSession = Awaited<ReturnType<typeof getServerSession>>;
+
+const hasSessionUser = (
+  value: AuthSession | null,
+): value is AuthSession & { user: { id?: string | null } } =>
+  Boolean(value && typeof value === "object" && "user" in value);
 
 type CultivarWithOfferings = Prisma.CultivarGetPayload<{
   include: {
@@ -95,7 +102,7 @@ export async function GET(request: Request) {
 
   try {
     const session = await getServerSession(authConfig);
-    const clientId = getClientLikeId();
+    const clientId = await getClientLikeId();
 
     const [cultivars, providers, reports] = await Promise.all([
       prisma.cultivar.findMany({
@@ -145,7 +152,7 @@ export async function GET(request: Request) {
     let likedIds = new Set<number>();
     if (reports.length > 0) {
       const orConditions: Array<{ userId?: number; clientId?: string }> = [];
-      if (session?.user?.id) {
+      if (hasSessionUser(session) && session.user.id) {
         const parsed = Number(session.user.id);
         if (!Number.isNaN(parsed)) {
           orConditions.push({ userId: parsed });

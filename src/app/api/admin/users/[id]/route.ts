@@ -5,9 +5,11 @@ import { getSession } from "@/lib/auth-guard";
 const ALLOWED_ROLES = new Set(["USER", "SUPPORTER", "VERIFIED", "MODERATOR", "ADMIN", "OWNER"]);
 const ALLOWED_STATUS = new Set(["ACTIVE", "INVITED", "SUSPENDED"]);
 
+type RouteParams = { id: string };
+
 export async function PATCH(
   request: Request,
-  context: { params: { id: string } },
+  context: { params: Promise<RouteParams> },
 ) {
   const session = await getSession();
   if (!session?.user) {
@@ -19,7 +21,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Nur Owner dürfen Rollen ändern." }, { status: 403 });
   }
 
-  const userId = Number(context.params.id);
+  const params = await context.params;
+  const userId = Number(params.id);
   if (Number.isNaN(userId)) {
     return NextResponse.json({ error: "Ungültige Nutzer-ID." }, { status: 400 });
   }

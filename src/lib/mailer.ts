@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import createTransport from "nodemailer";
 
 type BaseMailParams = {
   to: string;
@@ -7,7 +7,9 @@ type BaseMailParams = {
   text: string;
 };
 
-let transporter: nodemailer.Transporter | null = null;
+type MailTransporter = ReturnType<typeof createTransport> | null;
+
+let transporter: MailTransporter = null;
 
 const resolveTransporter = () => {
   if (transporter) {
@@ -27,7 +29,7 @@ const resolveTransporter = () => {
     return transporter;
   }
 
-  transporter = nodemailer.createTransport({
+  transporter = createTransport({
     host,
     port,
     secure: port === 465,

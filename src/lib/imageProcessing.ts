@@ -35,7 +35,12 @@ const loadSharp = async () => {
 
   try {
     const imported = await import("sharp");
-    sharpModule = (imported as unknown as { default?: typeof import("sharp") }).default ?? imported;
+    const candidate =
+      typeof imported === "function"
+        ? imported
+        : (imported as unknown as { default?: typeof import("sharp") }).default;
+
+    sharpModule = typeof candidate === "function" ? (candidate as typeof import("sharp")) : null;
   } catch (error) {
     console.warn("[IMAGE_PROCESSING] Sharp not available – HEIC conversion disabled.", error);
     sharpModule = null;
@@ -152,7 +157,10 @@ export const convertHeicBuffer = async (input: Buffer): Promise<HeicConversionRe
       const decoded = await heicDecode({ buffer: input });
       const sharp = await loadSharp();
       if (sharp && decoded?.data && decoded.width && decoded.height) {
-        const channels = decoded.channels ?? decoded.components ?? 4;
+        const channelCount = decoded.channels ?? decoded.components ?? 4;
+        const channels = (channelCount >= 1 && channelCount <= 4
+          ? channelCount
+          : 4) as 1 | 2 | 3 | 4;
         const rawBuffer = Buffer.from(
           decoded.data.buffer,
           decoded.data.byteOffset,

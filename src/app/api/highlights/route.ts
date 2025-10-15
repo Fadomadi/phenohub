@@ -4,9 +4,16 @@ import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { getClientLikeId } from "@/lib/likes";
 import { mockCultivars, mockProviders, mockReports, mockSeeds } from "@/data/mockData";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma";
 
 const TAKE = 6;
+
+type AuthSession = Awaited<ReturnType<typeof getServerSession>>;
+
+const hasSessionUser = (
+  value: AuthSession | null,
+): value is AuthSession & { user: { id?: string | null } } =>
+  Boolean(value && typeof value === "object" && "user" in value);
 
 type CultivarWithOfferings = Prisma.CultivarGetPayload<{
   include: {
@@ -184,7 +191,7 @@ const mapSeed = (seed: (typeof mockSeeds)[number]) => ({
 });
 
 export async function GET() {
-  let session: Awaited<ReturnType<typeof getServerSession>> | null = null;
+  let session: AuthSession | null = null;
   try {
     session = await getServerSession(authConfig);
   } catch (error) {
@@ -251,9 +258,9 @@ export async function GET() {
   if (reportsResult.status === "fulfilled") {
     const reports = reportsResult.value;
     if (reports.length > 0) {
-      const clientId = getClientLikeId();
+      const clientId = await getClientLikeId();
       const orConditions: Array<{ userId?: number; clientId?: string }> = [];
-      if (session?.user?.id) {
+      if (hasSessionUser(session) && session.user.id) {
         const parsed = Number(session.user.id);
         if (!Number.isNaN(parsed)) {
           orConditions.push({ userId: parsed });

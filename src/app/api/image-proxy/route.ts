@@ -71,14 +71,15 @@ export async function GET(request: Request) {
 
       if (conversion) {
         headers.set("Content-Type", conversion.contentType);
-        return new NextResponse(conversion.buffer, {
+        const responseBody = new Uint8Array(conversion.buffer);
+        return new NextResponse(responseBody, {
           status: 200,
           headers,
         });
       }
 
       headers.set("Content-Type", upstreamType ?? "image/heic");
-      return new NextResponse(originalBuffer, {
+      return new NextResponse(new Uint8Array(originalBuffer), {
         status: 200,
         headers,
       });

@@ -3,9 +3,11 @@ import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
+type RouteParams = { id: string; commentId: string };
+
 export async function DELETE(
   request: Request,
-  context: { params: { id: string; commentId: string } },
+  context: { params: Promise<RouteParams> },
 ) {
   const session = await getServerSession(authConfig);
   if (!session?.user?.id) {
@@ -16,8 +18,9 @@ export async function DELETE(
     return NextResponse.json({ error: "Nur Besitzer:innen dürfen Kommentare löschen." }, { status: 403 });
   }
 
-  const reportId = Number(context.params.id);
-  const commentId = Number(context.params.commentId);
+  const params = await context.params;
+  const reportId = Number(params.id);
+  const commentId = Number(params.commentId);
   if (Number.isNaN(reportId) || Number.isNaN(commentId)) {
     return NextResponse.json({ error: "Ungültige IDs übermittelt." }, { status: 400 });
   }

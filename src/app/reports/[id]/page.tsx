@@ -13,8 +13,10 @@ import { prepareImageUpload, resolveSuggestedFileName } from "@/lib/imageProcess
 
 export const dynamic = "force-dynamic";
 
+type RouteParams = { id: string };
+
 type ReportPageProps = {
-  params: { id: string };
+  params: Promise<RouteParams>;
 };
 
 type AdditionalInfo = {
@@ -389,7 +391,8 @@ const renderStars = (value: number, title?: string | null) => {
 };
 
 export default async function ReportPage({ params }: ReportPageProps) {
-  const id = Number(params.id);
+  const resolvedParams = await params;
+  const id = Number(resolvedParams.id);
   if (Number.isNaN(id)) {
     notFound();
   }
@@ -453,77 +456,69 @@ export default async function ReportPage({ params }: ReportPageProps) {
     originalFileName?: string | null;
   };
 
+  type NormalizedReportImage = {
+    direct: string;
+    preview?: string | null;
+    alt: string;
+    original?: string | null;
+  };
+
   const galleryEntries: GalleryEntry[] = Array.isArray(report.gallery)
-    ? (report.gallery as unknown[])
-        .map((entry) => {
-          if (!entry || typeof entry !== "object") return null;
-          const directUrl =
-            "directUrl" in entry && typeof (entry as Record<string, unknown>).directUrl === "string"
-              ? ((entry as Record<string, unknown>).directUrl as string)
-              : null;
-          if (!directUrl) return null;
+    ? (report.gallery as unknown[]).flatMap((entry) => {
+        if (!entry || typeof entry !== "object") {
+          return [];
+        }
 
-          const previewUrl =
-            "previewUrl" in entry && typeof (entry as Record<string, unknown>).previewUrl === "string"
-              ? ((entry as Record<string, unknown>).previewUrl as string)
-              : undefined;
-          const originalFileName =
-            "originalFileName" in entry &&
-            typeof (entry as Record<string, unknown>).originalFileName === "string"
-              ? ((entry as Record<string, unknown>).originalFileName as string)
-              : undefined;
+        const record = entry as Record<string, unknown>;
+        const directUrl = typeof record.directUrl === "string" ? record.directUrl : null;
+        if (!directUrl) {
+          return [];
+        }
 
-          return {
-            directUrl,
-            previewUrl,
-            originalFileName,
-          };
-        })
-        .filter((value): value is GalleryEntry => Boolean(value))
+        const normalized: GalleryEntry = {
+          directUrl,
+          previewUrl: typeof record.previewUrl === "string" ? record.previewUrl : undefined,
+          originalFileName:
+            typeof record.originalFileName === "string" ? record.originalFileName : undefined,
+        };
+
+        return [normalized];
+      })
     : [];
 
-  const fallbackImages = (report.images ?? [])
-    .map((img) => {
-      if (typeof img !== "string" || !img.trim()) {
-        return null;
-      }
+  const fallbackImages: NormalizedReportImage[] = (report.images ?? []).flatMap((img) => {
+    if (typeof img !== "string" || !img.trim()) {
+      return [];
+    }
 
-      const normalized = normalizeTmpfilesUrl(img);
-      const normalizedDirect =
-        typeof normalized.direct === "string" && normalized.direct.startsWith("http")
-          ? normalized.direct
-          : null;
-      const normalizedPreview =
-        typeof normalized.preview === "string" && normalized.preview.startsWith("http")
-          ? normalized.preview
-          : null;
+    const normalized = normalizeTmpfilesUrl(img);
+    const normalizedDirect =
+      typeof normalized.direct === "string" && normalized.direct.startsWith("http")
+        ? normalized.direct
+        : null;
+    const normalizedPreview =
+      typeof normalized.preview === "string" && normalized.preview.startsWith("http")
+        ? normalized.preview
+        : null;
 
-      const fallbackSource =
-        normalizedDirect ??
-        normalizedPreview ??
-        (img.startsWith("http") ? img : null);
+    const fallbackSource =
+      normalizedDirect ??
+      normalizedPreview ??
+      (img.startsWith("http") ? img : null);
 
-      if (!fallbackSource) {
-        return null;
-      }
+    if (!fallbackSource) {
+      return [];
+    }
 
-      return {
-        direct: fallbackSource,
-        preview: normalizedPreview ?? undefined,
-        alt: report.title,
-        original: img,
-      };
-    })
-    .filter(
-      (
-        value,
-      ): value is {
-        direct: string;
-        preview?: string;
-        alt: string;
-        original?: string;
-      } => Boolean(value?.direct),
-    );
+    const entry: NormalizedReportImage = {
+      direct: fallbackSource,
+      preview: normalizedPreview,
+      alt: report.title,
+      original: img,
+    };
+
+    return [entry];
+  });
 
   const reportImages =
     galleryEntries.length > 0

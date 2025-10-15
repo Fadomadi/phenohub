@@ -6,17 +6,20 @@ import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { LIKE_COOKIE_NAME } from "@/lib/likes";
 
+type RouteParams = { id: string };
+
 export async function POST(
   request: Request,
-  context: { params: { id: string } },
+  context: { params: Promise<RouteParams> },
 ) {
   const session = await getServerSession(authConfig);
-  const reportId = Number(context.params.id);
+  const params = await context.params;
+  const reportId = Number(params.id);
   if (Number.isNaN(reportId)) {
     return NextResponse.json({ error: "Ungültige Report-ID." }, { status: 400 });
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   let clientId = cookieStore.get(LIKE_COOKIE_NAME)?.value ?? null;
   let shouldSetCookie = false;
   if (!clientId) {

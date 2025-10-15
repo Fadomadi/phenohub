@@ -138,7 +138,12 @@ const uploadToTmpfiles = async (
     method: "POST",
     body: (() => {
       const formData = new FormData();
-      formData.append("file", new Blob([buffer], { type: contentType }), fileName);
+      const uint8Array = Uint8Array.from(buffer);
+      formData.append(
+        "file",
+        new Blob([uint8Array.buffer], { type: contentType }),
+        fileName,
+      );
       return formData;
     })(),
   });
