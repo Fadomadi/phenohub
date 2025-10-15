@@ -117,7 +117,20 @@ const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
     category: string | null;
   };
 
-  const offerings: OfferingCard[] = providerData.offerings.map((offering) => ({
+  type ProviderOffering = {
+    id: number;
+    priceEur: unknown;
+    category: string | null;
+    cultivar: {
+      name?: string | null;
+      slug?: string | null;
+      breeder?: string | null;
+    } | null;
+  };
+
+  const offeringsRaw = (providerData.offerings ?? []) as ProviderOffering[];
+
+  const offerings: OfferingCard[] = offeringsRaw.map((offering) => ({
       id: offering.id,
       cultivarName: offering.cultivar?.name ?? "Unbekannte Sorte",
       cultivarSlug: offering.cultivar?.slug ?? undefined,
