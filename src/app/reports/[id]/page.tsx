@@ -119,7 +119,7 @@ const migrateReportImages = async (report: ReportWithRelations) => {
 
   const mergedEntries: NormalizedGalleryEntry[] = [...existingGalleryEntries];
 
-  imageUrls.forEach((url) => {
+  imageUrls.forEach((url: string) => {
     if (!mergedEntries.some((entry) => entry.directUrl === url)) {
       mergedEntries.push({
         directUrl: url,
