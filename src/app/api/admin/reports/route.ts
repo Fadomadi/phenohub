@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 
+export const dynamic = "force-dynamic";
+
 const MODERATED_STATUS_VALUES = ["PENDING", "PUBLISHED", "REJECTED"] as const;
 type ModeratedStatus = (typeof MODERATED_STATUS_VALUES)[number];
 const isModeratedStatus = (value: string): value is ModeratedStatus =>
