@@ -66,10 +66,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   return NextResponse.json({ ok: true, report: updated });
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params;
   const auth = await requireAdmin();
   if (!auth.ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: auth.status });
