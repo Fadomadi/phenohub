@@ -781,7 +781,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
                           Grow-Notizen
                         </h2>
                         <div className="space-y-3 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
-                          {paragraphs.map((paragraph, index) => (
+                          {paragraphs.map((paragraph: string, index: number) => (
                             <p key={index}>{paragraph}</p>
                           ))}
                         </div>
