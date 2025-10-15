@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { getClientLikeId } from "@/lib/likes";
@@ -217,7 +216,38 @@ const mapSeed = (seed: (typeof mockSeeds)[number]) => ({
   thumbnails: seed.thumbnails ?? [],
 });
 
+let prismaClientCache: Awaited<ReturnType<typeof importPrismaClient>> | undefined;
+
+const importPrismaClient = async () => {
+  try {
+    const prismaModule = await import("@/lib/prisma");
+    return prismaModule.default;
+  } catch (error) {
+    console.warn("[HIGHLIGHTS_API] Prisma unavailable – falling back to mock data", error);
+    return null;
+  }
+};
+
+const getPrismaClient = async () => {
+  if (prismaClientCache !== undefined) {
+    return prismaClientCache;
+  }
+  prismaClientCache = await importPrismaClient();
+  return prismaClientCache;
+};
+
+const buildMockResponse = () => ({
+  cultivars: mockCultivars.slice(0, TAKE).map(mapMockCultivar),
+  providers: mockProviders.slice(0, TAKE).map(mapMockProvider),
+  reports: mockReports.slice(0, TAKE).map(mapMockReport),
+  seeds: mockSeeds.slice(0, TAKE).map(mapSeed),
+});
+
 export async function GET() {
+  const prisma = await getPrismaClient();
+  if (!prisma) {
+    return NextResponse.json(buildMockResponse());
+  }
   let session: AuthSession | null = null;
   try {
     session = await getServerSession(authConfig);
