@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import type { Prisma, ReportStatus } from "@prisma/client";
+import type { Prisma, $Enums } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { recalcAllMetrics } from "@/lib/metrics";
+
+type ReportStatus = $Enums.ReportStatus;
 
 const MODERATED_STATUSES = new Set<ReportStatus>(["PENDING", "PUBLISHED", "REJECTED"]);
 
