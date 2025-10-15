@@ -486,7 +486,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
       })
     : [];
 
-  const fallbackImages: NormalizedReportImage[] = (report.images ?? []).flatMap((img) => {
+  const fallbackImages: NormalizedReportImage[] = (report.images ?? []).flatMap((img: unknown) => {
     if (typeof img !== "string" || !img.trim()) {
       return [];
     }
@@ -504,7 +504,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
     const fallbackSource =
       normalizedDirect ??
       normalizedPreview ??
-      (img.startsWith("http") ? img : null);
+      (typeof img === "string" && img.startsWith("http") ? img : null);
 
     if (!fallbackSource) {
       return [];
