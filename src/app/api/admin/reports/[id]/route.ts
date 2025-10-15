@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import { recalcAllMetrics } from "@/lib/metrics";
@@ -42,20 +41,18 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const moderatorId = auth.session.user.id ? Number(auth.session.user.id) : undefined;
   const moderatedAt = new Date();
 
-  const updateData: Prisma.ReportUncheckedUpdateInput = {
-    status: normalizedStatus,
-    reviewNote: typeof reviewNote === "string" ? reviewNote : null,
-    moderatedAt,
-    moderatedById: moderatorId ?? null,
-    publishedAt:
-      normalizedStatus === "PUBLISHED"
-        ? report.publishedAt ?? moderatedAt
-        : null,
-  };
-
   const updated = await prisma.report.update({
     where: { id: reportId },
-    data: updateData,
+    data: {
+      status: normalizedStatus,
+      reviewNote: typeof reviewNote === "string" ? reviewNote : null,
+      moderatedAt,
+      moderatedById: moderatorId ?? null,
+      publishedAt:
+        normalizedStatus === "PUBLISHED"
+          ? report.publishedAt ?? moderatedAt
+          : null,
+    },
     include: {
       cultivar: { select: { id: true } },
       provider: { select: { id: true } },
