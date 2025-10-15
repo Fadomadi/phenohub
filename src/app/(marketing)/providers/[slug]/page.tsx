@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { Prisma } from "@prisma/client";
 import {
   ArrowLeft,
   Leaf,
@@ -38,10 +37,6 @@ const providerInclude = {
   },
 } as const;
 
-type ProviderWithOfferings = Prisma.ProviderGetPayload<{
-  include: typeof providerInclude;
-}>;
-
 const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
   const { slug } = await params;
 
@@ -54,16 +49,16 @@ const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
     notFound();
   }
 
-  const typedProvider = provider as ProviderWithOfferings;
+  const providerData = provider;
 
   const [reportMetrics, recentReports] = await Promise.all([
     prisma.report.aggregate({
-      where: { providerId: typedProvider.id },
+      where: { providerId: providerData.id },
       _avg: { overall: true, shipping: true, vitality: true, stability: true },
       _count: true,
     }),
     prisma.report.findMany({
-      where: { providerId: typedProvider.id },
+      where: { providerId: providerData.id },
       include: {
         cultivar: { select: { name: true, slug: true } },
         provider: { select: { name: true, slug: true } },
@@ -97,16 +92,16 @@ const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
   }));
 
   const avgOverall =
-    typedProvider.avgScore !== null && typedProvider.avgScore !== undefined
-      ? toOneDecimal(Number(typedProvider.avgScore))
+    providerData.avgScore !== null && providerData.avgScore !== undefined
+      ? toOneDecimal(Number(providerData.avgScore))
       : toOneDecimal(Number(reportMetrics._avg.overall ?? 0));
   const avgShipping =
-    typedProvider.shippingScore !== null && typedProvider.shippingScore !== undefined
-      ? toOneDecimal(Number(typedProvider.shippingScore))
+    providerData.shippingScore !== null && providerData.shippingScore !== undefined
+      ? toOneDecimal(Number(providerData.shippingScore))
       : toOneDecimal(Number(reportMetrics._avg.shipping ?? 0));
   const avgVitality =
-    typedProvider.vitalityScore !== null && typedProvider.vitalityScore !== undefined
-      ? toOneDecimal(Number(typedProvider.vitalityScore))
+    providerData.vitalityScore !== null && providerData.vitalityScore !== undefined
+      ? toOneDecimal(Number(providerData.vitalityScore))
       : toOneDecimal(Number(reportMetrics._avg.vitality ?? 0));
   const avgStability = toOneDecimal(Number(reportMetrics._avg.stability ?? 0));
   const reportCount = reportMetrics._count ?? 0;
@@ -122,8 +117,7 @@ const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
     category: string | null;
   };
 
-  const offerings: OfferingCard[] = typedProvider.offerings.map(
-    (offering: ProviderWithOfferings["offerings"][number]) => ({
+  const offerings: OfferingCard[] = providerData.offerings.map((offering) => ({
       id: offering.id,
       cultivarName: offering.cultivar?.name ?? "Unbekannte Sorte",
       cultivarSlug: offering.cultivar?.slug ?? undefined,
