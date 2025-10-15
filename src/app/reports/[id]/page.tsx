@@ -49,7 +49,7 @@ const formatDate = (value: Date | null) => {
 const reportInclude = {
   cultivar: { select: { name: true, breeder: true, slug: true } },
   provider: { select: { name: true, slug: true } },
-} satisfies Parameters<typeof prisma.report.findUnique>[0]["include"];
+} as const;
 
 const fetchReport = (id: number) =>
   prisma.report.findUnique({
