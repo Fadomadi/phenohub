@@ -736,7 +736,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
     .split(/\n{2,}/)
     .map((paragraph: string) => paragraph.trim())
     .filter(
-      (paragraph) =>
+      (paragraph: string) =>
         Boolean(paragraph) &&
         !/^setup:/i.test(paragraph) &&
         !/^- (Lampe|Zelt|Medium):/i.test(paragraph),
