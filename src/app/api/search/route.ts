@@ -4,8 +4,31 @@ import { mockCultivars, mockProviders, mockReports } from "@/data/mockData";
 import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { getClientLikeId } from "@/lib/likes";
+import type { Prisma } from "@prisma/client";
 
-const toCultivar = (cultivar: any) => ({
+type CultivarWithOfferings = Prisma.CultivarGetPayload<{
+  include: {
+    offerings: {
+      include: {
+        provider: {
+          select: {
+            name: true;
+            slug: true;
+          };
+        };
+      };
+    };
+  };
+}>;
+
+type ReportWithRelations = Prisma.ReportGetPayload<{
+  include: {
+    cultivar: { select: { name: true; slug: true } };
+    provider: { select: { name: true; slug: true } };
+  };
+}>;
+
+const toCultivar = (cultivar: CultivarWithOfferings) => ({
   id: cultivar.id,
   slug: cultivar.slug,
   name: cultivar.name,
@@ -17,7 +40,7 @@ const toCultivar = (cultivar: any) => ({
   trending: cultivar.trending,
   thumbnails: cultivar.thumbnails,
   breeder: cultivar.breeder ?? null,
-  offerings: (cultivar.offerings ?? []).map((offering: any) => ({
+  offerings: (cultivar.offerings ?? []).map((offering) => ({
     providerName: offering.provider?.name ?? "",
     providerSlug: offering.provider?.slug ?? "",
     priceEur:
@@ -132,23 +155,22 @@ export async function GET(request: Request) {
         orConditions.push({ clientId });
       }
       if (orConditions.length > 0) {
-        const reportLikeClient = (prisma as any).reportLike;
-        if (reportLikeClient?.findMany) {
-          const likes = await reportLikeClient.findMany({
+        try {
+          const likes = await prisma.reportLike.findMany({
             where: {
               reportId: { in: reports.map((report) => report.id) },
               OR: orConditions,
             },
           });
-          likedIds = new Set(likes.map((like: { reportId: number }) => like.reportId));
-        } else {
-          console.warn("[SEARCH_API] reportLike client not available – skipping likedIds resolution");
+          likedIds = new Set(likes.map((like) => like.reportId));
+        } catch (error) {
+          console.warn("[SEARCH_API] reportLike lookup failed – skipping likedIds resolution", error);
         }
       }
     }
 
     const normalizedCultivars = cultivars.map(toCultivar);
-    const normalizedReports = reports.map((report) => ({
+    const normalizedReports = reports.map((report: ReportWithRelations) => ({
       id: report.id,
       title: report.title,
       cultivar: report.cultivar.name,

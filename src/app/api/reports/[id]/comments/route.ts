@@ -7,7 +7,7 @@ export async function GET(
   request: Request,
   context: { params: { id: string } },
 ) {
-  const reportCommentClient = (prisma as any).reportComment;
+  const reportCommentClient = prisma.reportComment;
   const reportId = Number(context.params.id);
   if (Number.isNaN(reportId)) {
     return NextResponse.json({ error: "Ungültige Report-ID." }, { status: 400 });
@@ -39,7 +39,7 @@ export async function POST(
   request: Request,
   context: { params: { id: string } },
 ) {
-  const reportCommentClient = (prisma as any).reportComment;
+  const reportCommentClient = prisma.reportComment;
   const session = await getServerSession(authConfig);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Bitte melde dich an." }, { status: 401 });

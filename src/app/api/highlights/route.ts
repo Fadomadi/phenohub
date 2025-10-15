@@ -4,10 +4,57 @@ import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { getClientLikeId } from "@/lib/likes";
 import { mockCultivars, mockProviders, mockReports, mockSeeds } from "@/data/mockData";
+import type { Prisma } from "@prisma/client";
 
 const TAKE = 6;
 
-const toCultivar = (cultivar: any) => ({
+type CultivarWithOfferings = Prisma.CultivarGetPayload<{
+  include: {
+    offerings: {
+      include: {
+        provider: {
+          select: {
+            name: true;
+            slug: true;
+          };
+        };
+      };
+    };
+  };
+}>;
+
+type ProviderRecord = Prisma.ProviderGetPayload<Prisma.ProviderDefaultArgs>;
+type ReportRecord = Prisma.ReportGetPayload<{
+  include: {
+    cultivar: { select: { name: true; slug: true } };
+    provider: { select: { name: true; slug: true } };
+  };
+}>;
+
+type ReportHighlight = {
+  id: number;
+  title: string;
+  cultivar: string;
+  cultivarSlug: string;
+  provider: string;
+  providerSlug: string;
+  author: string | null;
+  shipping: number;
+  vitality: number;
+  stability: number;
+  overall: number;
+  status: string;
+  thumbnail: string;
+  images: string[];
+  date: string;
+  likes: number;
+  liked: boolean;
+  comments: number;
+  views: number;
+  excerpt: string | null;
+};
+
+const mapCultivar = (cultivar: CultivarWithOfferings) => ({
   id: cultivar.id,
   slug: cultivar.slug,
   name: cultivar.name,
@@ -19,15 +66,18 @@ const toCultivar = (cultivar: any) => ({
   trending: cultivar.trending,
   thumbnails: cultivar.thumbnails,
   breeder: cultivar.breeder ?? null,
-  offerings: (cultivar.offerings ?? []).map((offering: any) => ({
+  offerings: (cultivar.offerings ?? []).map((offering) => ({
     providerName: offering.provider?.name ?? "",
     providerSlug: offering.provider?.slug ?? "",
-    priceEur: offering.priceEur !== null && offering.priceEur !== undefined ? Number(offering.priceEur) : null,
+    priceEur:
+      offering.priceEur !== null && offering.priceEur !== undefined
+        ? Number(offering.priceEur)
+        : null,
     category: offering.category ?? null,
   })),
 });
 
-const toProvider = (provider: any) => ({
+const mapProvider = (provider: ProviderRecord) => ({
   id: provider.id,
   slug: provider.slug,
   name: provider.name,
@@ -39,18 +89,18 @@ const toProvider = (provider: any) => ({
   vitalityScore: Number(provider.vitalityScore),
 });
 
-const toReport = (report: any, liked = false) => ({
+const mapReport = (report: ReportRecord, liked = false): ReportHighlight => ({
   id: report.id,
   title: report.title,
   cultivar: report.cultivar?.name ?? "",
   cultivarSlug: report.cultivar?.slug ?? "",
   provider: report.provider?.name ?? "",
   providerSlug: report.provider?.slug ?? "",
-  author: report.authorHandle,
+  author: report.authorHandle ?? null,
   shipping: Number(report.shipping ?? 0),
   vitality: Number(report.vitality ?? 0),
   stability: Number(report.stability ?? 0),
-  overall: Number(report.overall),
+  overall: Number(report.overall ?? 0),
   status: report.status ?? "PUBLISHED",
   thumbnail: report.images?.[0] ?? "🌱",
   images: report.images ?? [],
@@ -59,10 +109,10 @@ const toReport = (report: any, liked = false) => ({
   liked,
   comments: Number(report.comments ?? 0),
   views: Number(report.views ?? 0),
-  excerpt: report.excerpt ?? "",
+  excerpt: report.excerpt ?? null,
 });
 
-const toMockReport = (report: (typeof mockReports)[number]): ReturnType<typeof toReport> => {
+const mapMockReport = (report: (typeof mockReports)[number]): ReportHighlight => {
   const date = report.date ? new Date(report.date) : new Date();
   const isValidDate = !Number.isNaN(date.getTime());
 
@@ -86,11 +136,41 @@ const toMockReport = (report: (typeof mockReports)[number]): ReturnType<typeof t
     liked: Boolean(report.liked ?? false),
     comments: Number(report.comments ?? 0),
     views: Number(report.views ?? 0),
-    excerpt: report.excerpt ?? "",
+    excerpt: report.excerpt ?? null,
   };
 };
 
-const toSeed = (seed: any) => ({
+type CultivarHighlight = ReturnType<typeof mapCultivar>;
+type ProviderHighlight = ReturnType<typeof mapProvider>;
+
+const mapMockCultivar = (cultivar: (typeof mockCultivars)[number]): CultivarHighlight => ({
+  id: cultivar.id,
+  slug: cultivar.slug,
+  name: cultivar.name,
+  aka: cultivar.aka,
+  cloneOnly: cultivar.cloneOnly,
+  reportCount: cultivar.reportCount,
+  avgRating: cultivar.avgRating,
+  imageCount: cultivar.imageCount,
+  trending: cultivar.trending,
+  thumbnails: cultivar.thumbnails,
+  breeder: cultivar.breeder ?? null,
+  offerings: [],
+});
+
+const mapMockProvider = (provider: (typeof mockProviders)[number]): ProviderHighlight => ({
+  id: provider.id,
+  slug: provider.slug,
+  name: provider.name,
+  country: provider.country,
+  countryFlag: provider.countryFlag,
+  avgScore: provider.avgScore,
+  reportCount: provider.reportCount,
+  shippingScore: provider.shippingScore,
+  vitalityScore: provider.vitalityScore,
+});
+
+const mapSeed = (seed: (typeof mockSeeds)[number]) => ({
   id: seed.id,
   slug: seed.slug,
   name: seed.name,
@@ -151,22 +231,22 @@ export async function GET() {
 
   const cultivars =
     cultivarsResult.status === "fulfilled"
-      ? cultivarsResult.value.map(toCultivar)
+      ? cultivarsResult.value.map(mapCultivar)
       : (() => {
           console.error("[HIGHLIGHTS_API] cultivars query failed – using mock data", cultivarsResult.reason);
-          return mockCultivars.slice(0, TAKE);
+          return mockCultivars.slice(0, TAKE).map(mapMockCultivar);
         })();
 
   const providers =
     providersResult.status === "fulfilled"
-      ? providersResult.value.map(toProvider)
+      ? providersResult.value.map(mapProvider)
       : (() => {
           console.error("[HIGHLIGHTS_API] providers query failed – using mock data", providersResult.reason);
-          return mockProviders.slice(0, TAKE);
+          return mockProviders.slice(0, TAKE).map(mapMockProvider);
         })();
 
   let likedIds = new Set<number>();
-  let reportsPayload: ReturnType<typeof toReport>[] = [];
+  let reportsPayload: ReportHighlight[] = [];
 
   if (reportsResult.status === "fulfilled") {
     const reports = reportsResult.value;
@@ -184,32 +264,27 @@ export async function GET() {
       }
 
       if (orConditions.length > 0) {
-        const reportLikeClient = (prisma as any).reportLike;
-        if (reportLikeClient?.findMany) {
-          try {
-            const likes = await reportLikeClient.findMany({
-              where: {
-                reportId: { in: reports.map((report) => report.id) },
-                OR: orConditions,
-              },
-            });
-            likedIds = new Set(likes.map((like: { reportId: number }) => like.reportId));
-          } catch (error) {
-            console.warn("[HIGHLIGHTS_API] likes lookup failed", error);
-          }
-        } else {
-          console.warn("[HIGHLIGHTS_API] reportLike client not available – skipping likedIds resolution");
+        try {
+          const likes = await prisma.reportLike.findMany({
+            where: {
+              reportId: { in: reports.map((report) => report.id) },
+              OR: orConditions,
+            },
+          });
+          likedIds = new Set(likes.map((like) => like.reportId));
+        } catch (error) {
+          console.warn("[HIGHLIGHTS_API] likes lookup failed", error);
         }
       }
     }
 
-    reportsPayload = reports.map((report) => toReport(report, likedIds.has(report.id)));
+    reportsPayload = reports.map((report) => mapReport(report, likedIds.has(report.id)));
   } else {
     console.error("[HIGHLIGHTS_API] reports query failed – using mock data", reportsResult.reason);
-    reportsPayload = mockReports.slice(0, TAKE).map(toMockReport);
+    reportsPayload = mockReports.slice(0, TAKE).map(mapMockReport);
   }
 
-  const seeds = mockSeeds.slice(0, TAKE).map(toSeed);
+  const seeds = mockSeeds.slice(0, TAKE).map(mapSeed);
 
   return NextResponse.json({
     cultivars,

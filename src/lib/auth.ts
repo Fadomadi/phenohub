@@ -1,8 +1,15 @@
-import type { NextAuthOptions } from "next-auth";
+import type { NextAuthOptions, User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+
+type ExtendedUser = User & {
+  role: string;
+  status: string;
+  plan: string;
+  username?: string | null;
+};
 
 export const authConfig: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -44,7 +51,7 @@ export const authConfig: NextAuthOptions = {
           user.email?.split("@")[0] ||
           "Community";
 
-        return {
+        const nextUser: ExtendedUser = {
           id: String(user.id),
           email: user.email,
           name: fallbackDisplay,
@@ -52,19 +59,22 @@ export const authConfig: NextAuthOptions = {
           role: user.role,
           status: user.status,
           plan: user.plan,
-        } as any;
+        };
+
+        return nextUser;
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.userId = (user as any).id;
-        token.role = (user as any).role ?? token.role;
-        token.status = (user as any).status ?? token.status;
-        token.plan = (user as any).plan ?? token.plan;
-        token.email = (user as any).email?.toLowerCase() ?? token.email;
-        token.username = (user as any).username ?? (user as any).name ?? token.username;
+        const extendedUser = user as ExtendedUser;
+        token.userId = extendedUser.id ?? token.userId;
+        token.role = extendedUser.role ?? token.role;
+        token.status = extendedUser.status ?? token.status;
+        token.plan = extendedUser.plan ?? token.plan;
+        token.email = extendedUser.email?.toLowerCase() ?? token.email;
+        token.username = extendedUser.username ?? extendedUser.name ?? token.username;
         token.name = token.username ?? token.name;
       } else if (token.email) {
         const dbUser = await prisma.user.findUnique({
@@ -84,11 +94,11 @@ export const authConfig: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.userId;
-        (session.user as any).role = token.role;
-        (session.user as any).status = token.status;
-        (session.user as any).plan = token.plan;
-        (session.user as any).username = token.username ?? (session.user as any).username ?? null;
+        session.user.id = token.userId;
+        session.user.role = token.role;
+        session.user.status = token.status;
+        session.user.plan = token.plan;
+        session.user.username = token.username ?? session.user.username ?? null;
         if (token.username) {
           session.user.name = token.username;
         } else if (session.user.name && session.user.name.includes("@")) {

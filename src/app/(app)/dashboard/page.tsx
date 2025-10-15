@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
@@ -78,11 +79,16 @@ const DashboardPage = () => {
           throw new Error(result?.error || "Reports konnten nicht geladen werden.");
         }
 
-        setReports((result.reports ?? []).map((report: any) => ({
-          ...report,
-          createdAt: report.createdAt,
-          publishedAt: report.publishedAt,
-        })) as ReportSummary[]);
+        const reportsData = Array.isArray(result?.reports)
+          ? (result.reports as ReportSummary[])
+          : [];
+        setReports(
+          reportsData.map((report) => ({
+            ...report,
+            createdAt: report.createdAt,
+            publishedAt: report.publishedAt,
+          })),
+        );
       } catch (error) {
         setReportsError(error instanceof Error ? error.message : "Unbekannter Fehler");
         setReports([]);
@@ -210,12 +216,12 @@ const DashboardPage = () => {
         </header>
 
         <div className="flex flex-wrap items-center gap-2">
-          <a
+          <Link
             href="/"
             className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 sm:w-auto"
           >
             ← Zur Startseite
-          </a>
+          </Link>
         </div>
 
         <section className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">

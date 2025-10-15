@@ -191,7 +191,7 @@ export const prepareImageUpload = async ({
   const inputType = contentType?.toLowerCase() ?? "";
   let normalizedType = inputType || "image/jpeg";
   const originalExtension = extname(fileName || "");
-  let baseName = sanitizeFileName(fileName || originalExtension || `upload-${Date.now()}`);
+  const baseName = sanitizeFileName(fileName || originalExtension || `upload-${Date.now()}`);
   let workingBuffer = buffer;
   let extension = contentTypeToExtension(normalizedType) ?? (originalExtension || ".jpg");
 

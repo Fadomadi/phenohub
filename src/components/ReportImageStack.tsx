@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 type ReportImageStackItem = {
   id: string;
@@ -51,9 +51,8 @@ const ReportImageEntry = ({ item }: { item: ReportImageStackItem }) => {
 };
 
 const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
-  if (!Array.isArray(items) || items.length === 0) {
-    return null;
-  }
+  const normalizedItems = Array.isArray(items) ? items : [];
+  const hasItems = normalizedItems.length > 0;
 
   const containerClassName = [
     "space-y-4 md:flex md:w-auto md:flex-col md:items-end md:space-y-4 md:self-start md:shrink-0",
@@ -78,20 +77,20 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
   const nextImage = useCallback(() => {
     setActiveIndex((previous) => {
       if (previous === null) return previous;
-      return (previous + 1) % items.length;
+      return (previous + 1) % normalizedItems.length;
     });
     setActiveSourceIndex(0);
-  }, [items.length]);
+  }, [normalizedItems.length]);
 
   const previousImage = useCallback(() => {
     setActiveIndex((previous) => {
       if (previous === null) return previous;
-      return (previous - 1 + items.length) % items.length;
+      return (previous - 1 + normalizedItems.length) % normalizedItems.length;
     });
     setActiveSourceIndex(0);
-  }, [items.length]);
+  }, [normalizedItems.length]);
 
-  const activeItem = activeIndex !== null ? items[activeIndex] : null;
+  const activeItem = activeIndex !== null ? normalizedItems[activeIndex] : null;
   const modalSources = useMemo(
     () => (activeItem ? activeItem.sources.filter(Boolean) : []),
     [activeItem],
@@ -131,10 +130,14 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
     return undefined;
   }, [activeItem, closeModal, nextImage, previousImage]);
 
+  if (!hasItems) {
+    return null;
+  }
+
   return (
     <>
       <div className={containerClassName}>
-        {items.map((item, index) => (
+        {normalizedItems.map((item, index) => (
           <button
             key={item.id}
             type="button"
@@ -195,9 +198,9 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
               <span className="truncate">{activeItem.alt}</span>
             </div>
 
-            {items.length > 1 && (
+            {normalizedItems.length > 1 && (
               <div className="grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8">
-                {items.map((item, index) => (
+                {normalizedItems.map((item, index) => (
                   <button
                     key={`${item.id}-thumb`}
                     type="button"

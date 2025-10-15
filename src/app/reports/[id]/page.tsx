@@ -426,16 +426,14 @@ export default async function ReportPage({ params }: ReportPageProps) {
     createdAt: Date;
   };
 
-  let comments: DbComment[];
-  const reportCommentClient = (prisma as any).reportComment;
-  if (reportCommentClient?.findMany) {
-    comments = (await reportCommentClient.findMany({
+  let comments: DbComment[] = [];
+  try {
+    comments = await prisma.reportComment.findMany({
       where: { reportId: id },
       orderBy: { createdAt: "asc" },
-    })) as DbComment[];
-  } else {
-    console.warn("[REPORT_PAGE] reportComment client not available – returning empty comments");
-    comments = [];
+    });
+  } catch (error) {
+    console.warn("[REPORT_PAGE] reportComment lookup failed – returning empty comments", error);
   }
 
   const serializedComments = comments.map((comment) => ({

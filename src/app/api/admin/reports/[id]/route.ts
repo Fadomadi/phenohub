@@ -5,16 +5,19 @@ import { recalcAllMetrics } from "@/lib/metrics";
 
 const MODERATED_STATUSES = new Set(["PENDING", "PUBLISHED", "REJECTED"]);
 
+type RouteParams = Promise<{ params: { id: string } }>;
+
 export async function PATCH(
   request: Request,
-  context: { params: { id: string } },
+  context: RouteParams,
 ) {
+  const { params } = await context;
   const auth = await requireAdmin();
   if (!auth.ok || !auth.session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: auth.status });
   }
 
-  const reportId = Number(context.params.id);
+  const reportId = Number(params.id);
   if (Number.isNaN(reportId)) {
     return NextResponse.json({ error: "Ungültige Report-ID." }, { status: 400 });
   }
@@ -68,14 +71,15 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } },
+  context: RouteParams,
 ) {
+  const { params } = await context;
   const auth = await requireAdmin();
   if (!auth.ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: auth.status });
   }
 
-  const reportId = Number(context.params.id);
+  const reportId = Number(params.id);
   if (Number.isNaN(reportId)) {
     return NextResponse.json({ error: "Ungültige Report-ID." }, { status: 400 });
   }

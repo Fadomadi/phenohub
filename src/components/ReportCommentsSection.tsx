@@ -60,11 +60,20 @@ const ReportCommentsSection = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ body: commentText }),
         });
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result?.error || "Kommentar konnte nicht gespeichert werden.");
+        let result: unknown = null;
+        try {
+          result = await response.json();
+        } catch {
+          result = null;
         }
-        const newComment = result?.comment as ReportComment | undefined;
+        if (!response.ok) {
+          const errorMessage =
+            typeof result === "object" && result !== null && "error" in result
+              ? String((result as { error?: unknown }).error ?? "Kommentar konnte nicht gespeichert werden.")
+              : "Kommentar konnte nicht gespeichert werden.";
+          throw new Error(errorMessage);
+        }
+        const newComment = (result as { comment?: ReportComment }).comment;
         if (newComment) {
           setComments((prev) => [...prev, newComment]);
         }
@@ -88,14 +97,18 @@ const ReportCommentsSection = ({
       const response = await fetch(`/api/reports/${reportId}/comments/${commentId}`, {
         method: "DELETE",
       });
-      let result: any = null;
+      let result: unknown = null;
       try {
         result = await response.json();
       } catch {
         result = null;
       }
       if (!response.ok) {
-        throw new Error(result?.error || "Kommentar konnte nicht gelöscht werden.");
+        const errorMessage =
+          typeof result === "object" && result !== null && "error" in result
+            ? String((result as { error?: unknown }).error ?? "Kommentar konnte nicht gelöscht werden.")
+            : "Kommentar konnte nicht gelöscht werden.";
+        throw new Error(errorMessage);
       }
       setComments((prev) => prev.filter((comment) => comment.id !== commentId));
     } catch (err) {

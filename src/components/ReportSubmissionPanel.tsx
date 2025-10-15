@@ -115,8 +115,12 @@ const ReportSubmissionPanel = ({
   providers,
 }: ReportSubmissionPanelProps) => {
   const { data: session } = useSession();
+  const sessionUser = session?.user;
   const displayHandle =
-    ((session?.user as any)?.username as string | undefined) ?? session?.user?.name ?? "";
+    (typeof sessionUser?.username === "string" && sessionUser.username.trim().length > 0
+      ? sessionUser.username.trim()
+      : sessionUser?.name ?? ""
+    ).trim();
   const router = useRouter();
   const [formState, setFormState] = useState<FormState>({ ...defaultState, images: [] });
   const [availableCultivars, setAvailableCultivars] = useState<Cultivar[]>(cultivars);

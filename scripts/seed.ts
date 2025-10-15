@@ -308,7 +308,7 @@ async function main() {
       ? (() => {
           try {
             return JSON.parse(offering.terpenesJson!);
-          } catch (error) {
+          } catch (_error) {
             console.warn("[SEED] Invalid terpene JSON for", offering.cultivar);
             return null;
           }

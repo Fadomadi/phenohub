@@ -58,10 +58,14 @@ const filters: { key: SearchFilter; label: string }[] = [
 const StecklingsIndex = () => {
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = sessionStatus === "authenticated" && Boolean(session?.user);
-  const userHandle = useMemo(
-    () => ((session?.user as any)?.username as string | undefined) ?? session?.user?.name ?? null,
-    [session?.user],
-  );
+  const userHandle = useMemo(() => {
+    if (!session?.user) return null;
+    const { username, name } = session.user as {
+      username?: string | null;
+      name?: string | null;
+    };
+    return (username && username.trim().length > 0 ? username : name) ?? null;
+  }, [session?.user]);
 
   const handleSignOut = useCallback(() => {
     void signOut({ callbackUrl: "/" });

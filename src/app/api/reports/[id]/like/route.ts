@@ -16,12 +16,6 @@ export async function POST(
     return NextResponse.json({ error: "Ungültige Report-ID." }, { status: 400 });
   }
 
-  const reportLikeClient = (prisma as any).reportLike;
-  if (!reportLikeClient?.findFirst || !reportLikeClient?.create || !reportLikeClient?.delete) {
-    console.warn("[LIKE_API] reportLike client not available – rejecting POST");
-    return NextResponse.json({ error: "Likes derzeit nicht verfügbar." }, { status: 503 });
-  }
-
   const cookieStore = cookies();
   let clientId = cookieStore.get(LIKE_COOKIE_NAME)?.value ?? null;
   let shouldSetCookie = false;
@@ -48,7 +42,7 @@ export async function POST(
     return NextResponse.json({ error: "Identifikation fehlgeschlagen." }, { status: 400 });
   }
 
-  const existing = await reportLikeClient.findFirst({
+  const existing = await prisma.reportLike.findFirst({
     where: {
       reportId,
       OR: identifiers,
@@ -58,10 +52,10 @@ export async function POST(
   let liked: boolean;
 
   if (existing) {
-    await reportLikeClient.delete({ where: { id: existing.id } });
+    await prisma.reportLike.delete({ where: { id: existing.id } });
     liked = false;
   } else {
-    await reportLikeClient.create({
+    await prisma.reportLike.create({
       data: {
         reportId,
         userId: userId ?? null,
@@ -71,9 +65,7 @@ export async function POST(
     liked = true;
   }
 
-  const totalLikes = reportLikeClient.count
-    ? await reportLikeClient.count({ where: { reportId } })
-    : 0;
+  const totalLikes = await prisma.reportLike.count({ where: { reportId } });
 
   await prisma.report.update({
     where: { id: reportId },

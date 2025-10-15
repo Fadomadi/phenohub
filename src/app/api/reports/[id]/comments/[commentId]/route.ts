@@ -22,28 +22,18 @@ export async function DELETE(
     return NextResponse.json({ error: "Ungültige IDs übermittelt." }, { status: 400 });
   }
 
-  const reportCommentClient = (prisma as any).reportComment;
-  if (!reportCommentClient?.delete) {
-    console.warn("[COMMENTS_DELETE] reportComment client not available – rejecting DELETE");
-    return NextResponse.json({ error: "Kommentare derzeit nicht verfügbar." }, { status: 503 });
-  }
-
-  const existing = reportCommentClient.findUnique
-    ? await reportCommentClient.findUnique({ where: { id: commentId } })
-    : null;
+  const existing = await prisma.reportComment.findUnique({ where: { id: commentId } });
   if (!existing || existing.reportId !== reportId) {
     return NextResponse.json({ error: "Kommentar wurde nicht gefunden." }, { status: 404 });
   }
 
-  await reportCommentClient.delete({ where: { id: commentId } });
+  await prisma.reportComment.delete({ where: { id: commentId } });
 
-  if (reportCommentClient.count) {
-    const totalComments = await reportCommentClient.count({ where: { reportId } });
-    await prisma.report.update({
-      where: { id: reportId },
-      data: { comments: totalComments },
-    });
-  }
+  const totalComments = await prisma.reportComment.count({ where: { reportId } });
+  await prisma.report.update({
+    where: { id: reportId },
+    data: { comments: totalComments },
+  });
 
   return NextResponse.json({ ok: true });
 }

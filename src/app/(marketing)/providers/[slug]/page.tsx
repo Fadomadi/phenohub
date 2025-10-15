@@ -15,15 +15,14 @@ import type { Report } from "@/types/domain";
 
 export const dynamic = "force-dynamic";
 
-type ProviderPageProps = {
-  params: { slug: string };
-};
-
 const toOneDecimal = (value: number) =>
   Number.isFinite(value) ? Math.round(value * 10) / 10 : 0;
 
+type ProviderPageParams = { slug: string };
+type ProviderPageProps = { params: Promise<ProviderPageParams> };
+
 const ProviderDetailPage = async ({ params }: ProviderPageProps) => {
-  const slug = params.slug;
+  const { slug } = await params;
 
   const provider = await prisma.provider.findUnique({
     where: { slug },

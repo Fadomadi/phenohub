@@ -35,19 +35,21 @@ const ReportImageGallery = ({
   onImageOpen,
   interactive = true,
 }: ReportImageGalleryProps) => {
-  if (!Array.isArray(images) || images.length === 0) {
-    return null;
-  }
+  const normalizedImages = useMemo(
+    () => (Array.isArray(images) ? images : []),
+    [images],
+  );
+  const hasImages = normalizedImages.length > 0;
 
   const [activeImage, setActiveImage] = useState<ReportImage | null>(null);
   const [modalSources, setModalSources] = useState<string[]>([]);
   const [coverImage, galleryImages] = useMemo(() => {
-    if (images.length === 0) {
+    if (normalizedImages.length === 0) {
       return [undefined, [] as ReportImage[]] as const;
     }
-    const [first, ...rest] = images;
+    const [first, ...rest] = normalizedImages;
     return [first, rest] as const;
-  }, [images]);
+  }, [normalizedImages]);
 
   const containerClassName = ["space-y-8", className].filter(Boolean).join(" ");
   const thumbnails = showCover
@@ -120,6 +122,10 @@ const ReportImageGallery = ({
       document.body.style.overflow = previous;
     };
   }, [activeImage, isInteractive]);
+
+  if (!hasImages) {
+    return null;
+  }
 
   return (
     <div className={containerClassName}>

@@ -15,6 +15,7 @@ declare module "next-auth" {
     role: string;
     status: string;
     plan: string;
+    username?: string | null;
   }
 }
 
