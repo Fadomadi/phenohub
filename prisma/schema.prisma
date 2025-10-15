@@ -1,0 +1,296 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cultivar {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  aka         String[] @default([])
+  cloneOnly   Boolean  @default(false)
+  reportCount Int      @default(0)
+  avgRating   Decimal  @default(0.0)
+  imageCount  Int      @default(0)
+  trending    Boolean  @default(false)
+  thumbnails  String[] @default([])
+  description String?  @db.Text
+  genetics    String?  @db.Text
+  breeder     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reports   Report[]
+  offerings CultivarOffering[]
+}
+
+model Provider {
+  id            Int      @id @default(autoincrement())
+  name          String
+  slug          String   @unique
+  country       String
+  countryFlag   String
+  avgScore      Decimal  @default(0.0)
+  reportCount   Int      @default(0)
+  shippingScore Decimal  @default(0.0)
+  vitalityScore Decimal  @default(0.0)
+  website       String?
+  bio           String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reports   Report[]
+  offerings CultivarOffering[]
+}
+
+model Report {
+  id            Int          @id @default(autoincrement())
+  title         String
+  slug          String       @unique
+  excerpt       String       @db.Text
+  content       String?      @db.Text
+  authorHandle  String
+  shipping      Decimal      @default(0.0)
+  vitality      Decimal      @default(0.0)
+  stability     Decimal      @default(0.0)
+  overall       Decimal      @default(0.0)
+  likes         Int          @default(0)
+  comments      Int          @default(0)
+  views         Int          @default(0)
+  images        String[]     @default([])
+  gallery       Json?
+  additionalInfo Json?
+  publishedAt   DateTime?    @db.Timestamptz(6)
+  status        ReportStatus @default(PENDING)
+  reviewNote    String?      @db.Text
+  moderatedAt   DateTime?    @db.Timestamptz(6)
+  moderatedBy   User?        @relation("ModeratedReports", fields: [moderatedById], references: [id])
+  moderatedById Int?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  cultivar   Cultivar @relation(fields: [cultivarId], references: [id])
+  cultivarId Int
+
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  providerId Int
+
+  author   User? @relation(fields: [authorId], references: [id])
+  authorId Int?
+
+  interactions   Interaction[]
+  likedBy        ReportLike[]
+  commentEntries ReportComment[]
+}
+
+model CultivarOffering {
+  id         Int      @id @default(autoincrement())
+  cultivar   Cultivar @relation(fields: [cultivarId], references: [id], onDelete: Cascade)
+  cultivarId Int
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  providerId Int
+  priceEur   Decimal? @default(0.0)
+  category   String?
+  terpenes   Json?
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([providerId, cultivarId])
+}
+
+model User {
+  id               Int              @id @default(autoincrement())
+  email            String           @unique
+  name             String?
+  username         String?          @unique
+  image            String?
+  role             UserRole         @default(USER)
+  status           UserStatus       @default(ACTIVE)
+  verifiedAt       DateTime?
+  passwordHash     String?          @db.Text
+  lastLoginAt      DateTime?
+  bio              String?          @db.Text
+  plan             SubscriptionTier @default(FREE)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  stripeCustomerId String?
+
+  reports          Report[]
+  moderatedReports Report[]        @relation("ModeratedReports")
+  subscriptions    Subscription[]
+  interactions     Interaction[]
+  likedReports     ReportLike[]
+  accounts         Account[]
+  sessions         Session[]
+  comments         ReportComment[]
+}
+
+model Subscription {
+  id                Int                @id @default(autoincrement())
+  stripeSubId       String             @unique
+  status            SubscriptionStatus @default(ACTIVE)
+  tier              SubscriptionTier   @default(STARTER)
+  currentPeriodEnd  DateTime
+  cancelAtPeriodEnd Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model Interaction {
+  id        Int             @id @default(autoincrement())
+  type      InteractionType
+  createdAt DateTime        @default(now())
+  metadata  Json?
+
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?
+
+  report   Report? @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reportId Int?
+}
+
+model ReportLike {
+  id        Int      @id @default(autoincrement())
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reportId  Int
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int?
+  clientId  String?
+  createdAt DateTime @default(now())
+
+  @@unique([reportId, userId], map: "unique_report_user_like")
+  @@unique([reportId, clientId], map: "unique_report_client_like")
+}
+
+model ReportComment {
+  id         Int      @id @default(autoincrement())
+  report     Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reportId   Int
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int?
+  authorName String
+  body       String   @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([reportId], map: "idx_report_comment_report")
+  @@index([userId], map: "idx_report_comment_user")
+}
+
+enum InteractionType {
+  LIKE
+  COMMENT
+  VIEW
+}
+
+model Account {
+  id                Int      @id @default(autoincrement())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  createdAt DateTime @default(now())
+
+  @@unique([identifier, token])
+}
+
+model SupporterWaitlist {
+  id                 Int                     @id @default(autoincrement())
+  email              String
+  status             SupporterWaitlistStatus @default(PENDING)
+  source             String?
+  confirmationSentAt DateTime?
+  confirmedAt        DateTime?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  @@unique([email])
+}
+
+enum SupporterWaitlistStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INCOMPLETE
+  TRIALING
+  PAST_DUE
+  CANCELED
+}
+
+enum SubscriptionTier {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+  CUSTOM
+}
+
+enum UserRole {
+  USER
+  SUPPORTER
+  VERIFIED
+  MODERATOR
+  ADMIN
+  OWNER
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum ReportStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+}
