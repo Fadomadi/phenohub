@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import type { Prisma, ReportStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 
-const MODERATED_STATUSES = new Set<ReportStatus>(["PENDING", "PUBLISHED", "REJECTED"]);
+const MODERATED_STATUS_VALUES = ["PENDING", "PUBLISHED", "REJECTED"] as const;
+type ModeratedStatus = (typeof MODERATED_STATUS_VALUES)[number];
+const MODERATED_STATUSES = new Set<ModeratedStatus>(MODERATED_STATUS_VALUES);
 
 export async function GET(request: Request) {
   const auth = await requireAdmin();
@@ -16,8 +18,8 @@ export async function GET(request: Request) {
   const status = statusParam ? statusParam.toUpperCase() : null;
 
   const normalizedStatus =
-    status && status !== "ALL" && MODERATED_STATUSES.has(status as ReportStatus)
-      ? (status as ReportStatus)
+    status && status !== "ALL" && MODERATED_STATUSES.has(status as ModeratedStatus)
+      ? (status as ModeratedStatus)
       : undefined;
 
   const where: Prisma.ReportWhereInput | undefined = normalizedStatus
