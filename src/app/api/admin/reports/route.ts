@@ -5,7 +5,8 @@ import { requireAdmin } from "@/lib/auth-guard";
 
 const MODERATED_STATUS_VALUES = ["PENDING", "PUBLISHED", "REJECTED"] as const;
 type ModeratedStatus = (typeof MODERATED_STATUS_VALUES)[number];
-const MODERATED_STATUSES = new Set<ModeratedStatus>(MODERATED_STATUS_VALUES);
+const isModeratedStatus = (value: string): value is ModeratedStatus =>
+  MODERATED_STATUS_VALUES.includes(value as ModeratedStatus);
 
 export async function GET(request: Request) {
   const auth = await requireAdmin();
@@ -17,10 +18,8 @@ export async function GET(request: Request) {
   const statusParam = searchParams.get("status");
   const status = statusParam ? statusParam.toUpperCase() : null;
 
-  const normalizedStatus =
-    status && status !== "ALL" && MODERATED_STATUSES.has(status as ModeratedStatus)
-      ? (status as ModeratedStatus)
-      : undefined;
+  const normalizedStatus: ModeratedStatus | undefined =
+    status && status !== "ALL" && isModeratedStatus(status) ? status : undefined;
 
   const where: Prisma.ReportWhereInput | undefined = normalizedStatus
     ? { status: normalizedStatus }

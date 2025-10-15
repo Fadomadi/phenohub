@@ -6,7 +6,8 @@ import { recalcAllMetrics } from "@/lib/metrics";
 
 const MODERATED_STATUS_VALUES = ["PENDING", "PUBLISHED", "REJECTED"] as const;
 type ModeratedStatus = (typeof MODERATED_STATUS_VALUES)[number];
-const MODERATED_STATUSES = new Set<ModeratedStatus>(MODERATED_STATUS_VALUES);
+const isModeratedStatus = (value: string): value is ModeratedStatus =>
+  MODERATED_STATUS_VALUES.includes(value as ModeratedStatus);
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -27,17 +28,17 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "Ungültiger Status." }, { status: 400 });
   }
 
-  const statusCandidate = status.toUpperCase() as ModeratedStatus;
-  if (!MODERATED_STATUSES.has(statusCandidate)) {
+  const statusCandidate = status.toUpperCase();
+  if (!isModeratedStatus(statusCandidate)) {
     return NextResponse.json({ error: "Ungültiger Status." }, { status: 400 });
   }
 
+  const normalizedStatus: ModeratedStatus = statusCandidate;
   const report = await prisma.report.findUnique({ where: { id: reportId } });
   if (!report) {
     return NextResponse.json({ error: "Report nicht gefunden." }, { status: 404 });
   }
 
-  const normalizedStatus = statusCandidate;
   const moderatorId = auth.session.user.id ? Number(auth.session.user.id) : undefined;
   const moderatedAt = new Date();
 
