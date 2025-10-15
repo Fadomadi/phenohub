@@ -114,7 +114,7 @@ const migrateReportImages = async (report: ReportWithRelations) => {
     : [];
 
   const imageUrls = Array.isArray(report.images)
-    ? report.images.filter((url): url is string => typeof url === "string" && url.length > 0)
+    ? report.images.filter((url: unknown): url is string => typeof url === "string" && url.length > 0)
     : [];
 
   const mergedEntries: NormalizedGalleryEntry[] = [...existingGalleryEntries];
