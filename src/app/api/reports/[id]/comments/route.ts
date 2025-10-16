@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
+
+const importPrisma = async () => {
+  try {
+    const prismaModule = await import("@/lib/prisma");
+    return prismaModule.default;
+  } catch (error) {
+    console.warn("[COMMENTS_API] Prisma unavailable", error);
+    return null;
+  }
+};
 
 type RouteParams = { id: string };
 
@@ -9,19 +18,18 @@ export async function GET(
   request: Request,
   context: { params: Promise<RouteParams> },
 ) {
+  const prisma = await importPrisma();
+  if (!prisma) {
+    return NextResponse.json({ comments: [] });
+  }
+
   const params = await context.params;
-  const reportCommentClient = prisma.reportComment;
   const reportId = Number(params.id);
   if (Number.isNaN(reportId)) {
     return NextResponse.json({ error: "Ungültige Report-ID." }, { status: 400 });
   }
 
-  if (!reportCommentClient?.findMany) {
-    console.warn("[COMMENTS_API] reportComment client not available – returning empty comments");
-    return NextResponse.json({ comments: [] });
-  }
-
-  const comments = await reportCommentClient.findMany({
+  const comments = await prisma.reportComment.findMany({
     where: { reportId },
     orderBy: { createdAt: "asc" },
   });
@@ -42,16 +50,15 @@ export async function POST(
   request: Request,
   context: { params: Promise<RouteParams> },
 ) {
+  const prisma = await importPrisma();
+  if (!prisma) {
+    return NextResponse.json({ error: "Kommentare derzeit nicht verfügbar." }, { status: 503 });
+  }
+
   const params = await context.params;
-  const reportCommentClient = prisma.reportComment;
   const session = await getServerSession(authConfig);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Bitte melde dich an." }, { status: 401 });
-  }
-
-  if (!reportCommentClient?.create) {
-    console.warn("[COMMENTS_API] reportComment client not available – rejecting POST");
-    return NextResponse.json({ error: "Kommentare derzeit nicht verfügbar." }, { status: 503 });
   }
 
   const reportId = Number(params.id);
@@ -79,7 +86,7 @@ export async function POST(
     sessionUser?.email?.split("@")[0] ||
     "Community";
 
-  const created = await reportCommentClient.create({
+  const created = await prisma.reportComment.create({
     data: {
       reportId,
       userId,
@@ -88,9 +95,7 @@ export async function POST(
     },
   });
 
-  const totalComments = reportCommentClient.count
-    ? await reportCommentClient.count({ where: { reportId } })
-    : 0;
+  const totalComments = await prisma.reportComment.count({ where: { reportId } });
   await prisma.report.update({
     where: { id: reportId },
     data: { comments: totalComments },
