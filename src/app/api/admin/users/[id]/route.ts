@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth-guard";
+
+const importPrisma = async () => {
+  try {
+    const prismaModule = await import("@/lib/prisma");
+    return prismaModule.default;
+  } catch (error) {
+    console.warn("[ADMIN_USERS_API] Prisma unavailable", error);
+    return null;
+  }
+};
 
 const ALLOWED_ROLES = new Set(["USER", "SUPPORTER", "VERIFIED", "MODERATOR", "ADMIN", "OWNER"]);
 const ALLOWED_STATUS = new Set(["ACTIVE", "INVITED", "SUSPENDED"]);
@@ -11,6 +20,14 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<RouteParams> },
 ) {
+  const prisma = await importPrisma();
+  if (!prisma) {
+    return NextResponse.json(
+      { error: "Datenbank nicht verfügbar. Bitte später erneut versuchen." },
+      { status: 503 },
+    );
+  }
+
   const session = await getSession();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
