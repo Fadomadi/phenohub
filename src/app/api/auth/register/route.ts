@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import prisma from "@/lib/prisma";
+
+const importPrisma = async () => {
+  try {
+    const prismaModule = await import("@/lib/prisma");
+    return prismaModule.default;
+  } catch (error) {
+    console.warn("[REGISTER] Prisma unavailable", error);
+    return null;
+  }
+};
 
 export async function POST(request: Request) {
   try {
@@ -26,6 +35,14 @@ export async function POST(request: Request) {
       typeof usernameRaw === "string" && usernameRaw.trim().length > 0
         ? usernameRaw.trim().toLowerCase()
         : undefined;
+
+    const prisma = await importPrisma();
+    if (!prisma) {
+      return NextResponse.json(
+        { error: "Registrierung derzeit nicht möglich (Datenbank nicht erreichbar)." },
+        { status: 503 },
+      );
+    }
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {

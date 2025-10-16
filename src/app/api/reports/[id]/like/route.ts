@@ -1,17 +1,34 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
-import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { LIKE_COOKIE_NAME } from "@/lib/likes";
 
 type RouteParams = { id: string };
 
+const importPrisma = async () => {
+  try {
+    const prismaModule = await import("@/lib/prisma");
+    return prismaModule.default;
+  } catch (error) {
+    console.warn("[REPORT_LIKE] Prisma unavailable", error);
+    return null;
+  }
+};
+
 export async function POST(
   request: Request,
   context: { params: Promise<RouteParams> },
 ) {
+  const prisma = await importPrisma();
+  if (!prisma) {
+    return NextResponse.json(
+      { error: "Datenbank nicht verfügbar. Bitte später erneut versuchen." },
+      { status: 503 },
+    );
+  }
+
   const session = await getServerSession(authConfig);
   const params = await context.params;
   const reportId = Number(params.id);
