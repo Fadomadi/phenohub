@@ -1,16 +1,36 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guard";
 import {
   sendSupporterConfirmationMail,
   sendSupporterNotificationMail,
 } from "@/lib/mailer";
 
+const importPrisma = async () => {
+  try {
+    const prismaModule = await import("@/lib/prisma");
+    return prismaModule.default;
+  } catch (error) {
+    console.warn("[SUPPORT_WAITLIST] Prisma unavailable", error);
+    return null;
+  }
+};
+
 const EMAIL_REGEX =
   /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
 
 export async function POST(request: Request) {
   try {
+    const prisma = await importPrisma();
+    if (!prisma) {
+      return NextResponse.json(
+        {
+          error:
+            "Eintrag nicht möglich. Bitte probiere es später erneut oder kontaktiere support@phenohub.app.",
+        },
+        { status: 503 },
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const rawEmail: unknown = body?.email;
     const source: unknown = body?.source;
@@ -87,6 +107,11 @@ export async function GET() {
   const auth = await requireAdmin();
   if (!auth.ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: auth.status });
+  }
+
+  const prisma = await importPrisma();
+  if (!prisma) {
+    return NextResponse.json({ entries: [] });
   }
 
   const entries = await prisma.supporterWaitlist.findMany({
