@@ -1,11 +1,28 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guard";
+
+const importPrisma = async () => {
+  try {
+    const prismaModule = await import("@/lib/prisma");
+    return prismaModule.default;
+  } catch (error) {
+    console.warn("[PROFILE_API] Prisma unavailable", error);
+    return null;
+  }
+};
 
 export async function GET() {
   const auth = await requireAuth();
   if (!auth.ok || !auth.session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: auth.status });
+  }
+
+  const prisma = await importPrisma();
+  if (!prisma) {
+    return NextResponse.json(
+      { error: "Profil kann gerade nicht geladen werden." },
+      { status: 503 },
+    );
   }
 
   const userId = Number(auth.session.user.id);
@@ -93,6 +110,11 @@ export async function PATCH(request: Request) {
   const auth = await requireAuth();
   if (!auth.ok || !auth.session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: auth.status });
+  }
+
+  const prisma = await importPrisma();
+  if (!prisma) {
+    return NextResponse.json({ error: "Profil-Update aktuell nicht möglich." }, { status: 503 });
   }
 
   const userId = Number(auth.session.user.id);
