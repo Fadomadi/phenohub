@@ -1,6 +1,5 @@
 import { Buffer } from "node:buffer";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { uploadImage } from "@/lib/uploads";
@@ -42,6 +41,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Bitte alle Pflichtfelder ausfüllen." },
         { status: 400 },
+      );
+    }
+
+    const prisma = await importPrisma();
+    if (!prisma) {
+      return NextResponse.json(
+        { error: "Datenbank nicht verfügbar. Bitte später erneut versuchen." },
+        { status: 503 },
       );
     }
 
@@ -259,3 +266,12 @@ export async function POST(request: Request) {
     );
   }
 }
+const importPrisma = async () => {
+  try {
+    const prismaModule = await import("@/lib/prisma");
+    return prismaModule.default;
+  } catch (error) {
+    console.warn("[REPORTS_API] Prisma unavailable", error);
+    return null;
+  }
+};
