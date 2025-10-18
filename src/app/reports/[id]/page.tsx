@@ -580,7 +580,6 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
 
   const isPreviewMode = report.status !== "PUBLISHED";
 
-  const createdAtLabel = formatDate(report.createdAt);
   const publishedLabel = isPreviewMode
     ? "Noch nicht veröffentlicht"
     : formatDate(report.publishedAt ?? report.createdAt);
@@ -812,9 +811,6 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                       Veröffentlicht am {publishedLabel}
-                    </span>
-                    <span className="ml-auto text-gray-400 dark:text-slate-500">
-                      Erstellt am {createdAtLabel}
                     </span>
                   </div>
 
