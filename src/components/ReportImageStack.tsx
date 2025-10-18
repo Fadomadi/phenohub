@@ -49,6 +49,7 @@ const ReportImageEntry = ({ item }: { item: ReportImageStackItem }) => {
             loading={loading === "eager" ? undefined : loading}
             sizes="(max-width: 768px) 60vw, 240px"
             onError={handleError}
+            unoptimized
           />
         </div>
       </div>
@@ -201,6 +202,7 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
                 priority
                 sizes="90vw"
                 onError={handleModalError}
+                unoptimized
               />
             </div>
             <div className="flex items-center justify-between gap-3 text-sm text-white/80">
@@ -227,6 +229,7 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
                         fill
                         className="object-cover"
                         sizes="120px"
+                        unoptimized
                       />
                     </div>
                   </button>
