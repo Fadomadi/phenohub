@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
         hostname: "tmpfiles.org",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "ojsnhkocpinlgvyrlmfl.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
 };

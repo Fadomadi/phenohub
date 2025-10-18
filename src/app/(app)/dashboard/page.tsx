@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
-import ReportImageGallery from "@/components/ReportImageGallery";
-import { normalizeTmpfilesUrl } from "@/lib/images";
 
 type ReportSummary = {
   id: number;
@@ -474,108 +472,6 @@ const DashboardPage = () => {
   );
 };
 
-type ParsedGalleryEntry = {
-  direct: string;
-  preview?: string;
-  alt: string;
-  original?: string;
-};
-
-const toGalleryImages = (report: ReportSummary): ParsedGalleryEntry[] => {
-  const alt = report.title || "Report Bild";
-
-  const fromGallery =
-    Array.isArray(report.gallery) || typeof report.gallery === "object"
-      ? (Array.isArray(report.gallery) ? report.gallery : Object.values(report.gallery ?? {})).flatMap(
-          (entry) => (Array.isArray(entry) ? entry : [entry]),
-        )
-      : [];
-
-  const parsedFromGallery = Array.isArray(fromGallery)
-    ? (fromGallery as unknown[])
-        .flatMap((entry) => {
-          if (!entry || typeof entry !== "object") {
-            return [];
-          }
-
-          const record = entry as Record<string, unknown>;
-          const directUrl = typeof record.directUrl === "string" ? record.directUrl : null;
-          if (!directUrl) {
-            return [];
-          }
-
-          const previewUrl = typeof record.previewUrl === "string" ? record.previewUrl : undefined;
-          const normalized = normalizeTmpfilesUrl(directUrl);
-          const normalizedPreview =
-            typeof normalized.preview === "string" && normalized.preview.startsWith("http")
-              ? normalized.preview
-              : undefined;
-          const previewCandidate =
-            previewUrl && previewUrl.startsWith("http") ? previewUrl : normalizedPreview;
-
-          const normalizedEntry: ParsedGalleryEntry = {
-            direct:
-              normalized.direct && normalized.direct.startsWith("http")
-                ? normalized.direct
-                : directUrl,
-            original:
-              typeof record.originalFileName === "string" && record.originalFileName.trim().length > 0
-                ? record.originalFileName
-                : directUrl,
-            alt,
-          };
-
-          if (previewCandidate) {
-            normalizedEntry.preview = previewCandidate;
-          }
-
-          return [normalizedEntry];
-        })
-    : [];
-
-  if (parsedFromGallery.length > 0) {
-    return parsedFromGallery;
-  }
-
-  const fallbackImages = (report.images ?? [])
-    .flatMap((img) => {
-      if (typeof img !== "string" || !img.trim()) {
-        return [];
-      }
-
-      const normalized = normalizeTmpfilesUrl(img);
-      const direct =
-        typeof normalized.direct === "string" && normalized.direct.startsWith("http")
-          ? normalized.direct
-          : img.startsWith("http")
-            ? img
-            : null;
-
-      if (!direct) {
-        return [];
-      }
-
-      const normalizedPreview =
-        typeof normalized.preview === "string" && normalized.preview.startsWith("http")
-          ? normalized.preview
-          : undefined;
-
-      const entry: ParsedGalleryEntry = {
-        direct,
-        original: img,
-        alt,
-      };
-
-      if (normalizedPreview) {
-        entry.preview = normalizedPreview;
-      }
-
-      return [entry];
-    });
-
-  return fallbackImages;
-};
-
 const ReportDetailsModal = ({
   report,
   onClose,
@@ -598,19 +494,11 @@ const ReportDetailsModal = ({
     };
   }, [onClose]);
 
-  const galleryImages = useMemo(() => toGalleryImages(report), [report]);
-
-  const contentParagraphs = useMemo(() => {
-    if (!report.content) return [];
-    return report.content
-      .split(/\n{2,}/)
-      .map((paragraph) => paragraph.trim())
-      .filter(Boolean);
-  }, [report.content]);
+  const previewUrl = useMemo(() => `/reports/${report.id}?preview=1`, [report.id]);
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 px-4 py-10 backdrop-blur">
-      <div className="relative flex w-full max-w-5xl flex-col gap-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl">
+    <div className="fixed inset-0 z-[90] overflow-y-auto bg-black/60 px-4 py-8 backdrop-blur sm:flex sm:items-center sm:justify-center sm:px-6 sm:py-10">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl sm:max-h-[90vh] sm:overflow-hidden">
         <button
           type="button"
           onClick={onClose}
@@ -630,44 +518,31 @@ const ReportDetailsModal = ({
             Eingereicht am {new Date(report.createdAt).toLocaleString("de-DE")} · Status{" "}
             {report.status}
           </p>
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+            <a
+              href={previewUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-green-200 px-3 py-1 font-semibold text-green-700 transition hover:border-green-300 hover:bg-green-50"
+            >
+              Vorschau in neuem Tab öffnen
+            </a>
+            {report.status !== "PUBLISHED" && (
+              <span className="inline-flex items-center gap-2 rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 font-semibold text-yellow-800">
+                Noch nicht freigeschaltet
+              </span>
+            )}
+          </div>
         </header>
 
-        {galleryImages.length > 0 ? (
-          <ReportImageGallery images={galleryImages} heading="Eingereichte Bilder" />
-        ) : (
-          <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-500">
-            Keine Bilder vorhanden.
-          </div>
-        )}
-
-        {report.excerpt && (
-          <section className="space-y-2">
-            <h3 className="text-lg font-semibold text-gray-900">Kurzfassung</h3>
-            <p className="text-sm text-gray-700">{report.excerpt}</p>
-          </section>
-        )}
-
-        {contentParagraphs.length > 0 && (
-          <section className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-900">Inhalt</h3>
-            <div className="space-y-3 text-sm leading-relaxed text-gray-700">
-              {contentParagraphs.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {report.reviewNote && (
-          <section className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            Moderationshinweis: {report.reviewNote}
-          </section>
-        )}
-
-        <footer className="flex flex-wrap gap-4 text-xs text-gray-500">
-          {report.author?.email && <span>Eingereicht von {report.author.email}</span>}
-          {report.moderatedBy?.email && <span>Letzte Moderation durch {report.moderatedBy.email}</span>}
-        </footer>
+        <div className="overflow-hidden rounded-2xl border border-gray-200">
+          <iframe
+            src={previewUrl}
+            title={`Report ${report.title} Vorschau`}
+            className="h-[75vh] min-h-[420px] w-full"
+            loading="lazy"
+          />
+        </div>
       </div>
     </div>
   );

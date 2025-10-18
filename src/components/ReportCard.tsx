@@ -13,13 +13,15 @@ type ReportCardProps = {
 };
 
 const ReportCard = ({ report }: ReportCardProps) => {
-  const images = useMemo(
-    () =>
-      (report.images ?? []).map((img) =>
-        typeof img === "string" ? normalizeTmpfilesUrl(img).direct : img,
-      ),
-    [report.images],
-  );
+  const images = useMemo(() => {
+    const rawImages: unknown[] = Array.isArray(report.images) ? [...report.images] : [];
+    if (rawImages.length === 0 && typeof report.thumbnail === "string" && report.thumbnail.trim()) {
+      rawImages.push(report.thumbnail);
+    }
+    return rawImages
+      .map((img) => (typeof img === "string" ? normalizeTmpfilesUrl(img).direct : img))
+      .filter((value): value is string => typeof value === "string" && value.startsWith("http"));
+  }, [report.images, report.thumbnail]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const next = useCallback(

@@ -2,10 +2,13 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ThemeToggle from "@/components/ThemeToggle";
 import AuthSessionProvider from "@/components/AuthSessionProvider";
+import AgeGateOverlay from "@/components/AgeGateOverlay";
+import { AGE_COOKIE_NAME, AGE_COOKIE_VALUE } from "@/lib/ageGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +31,9 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const cookieStore = cookies();
+  const hasAgeConsent = cookieStore.get(AGE_COOKIE_NAME)?.value === AGE_COOKIE_VALUE;
+
   return (
     <html lang="de" suppressHydrationWarning>
       <body
@@ -39,7 +45,10 @@ export default function RootLayout({
         </Script>
         <ThemeProvider>
           <ThemeToggle />
-          <AuthSessionProvider>{children}</AuthSessionProvider>
+          <AuthSessionProvider>
+            <AgeGateOverlay initialOpen={!hasAgeConsent} />
+            {children}
+          </AuthSessionProvider>
         </ThemeProvider>
       </body>
     </html>

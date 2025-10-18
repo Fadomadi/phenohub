@@ -6,7 +6,7 @@
    npm install
    ```
 
-2. Stelle sicher, dass PostgreSQL läuft (Postgres.app → „Running“) und `.env` die korrekte `DATABASE_URL` enthält.
+2. Stelle sicher, dass PostgreSQL läuft (Postgres.app → „Running“) und `.env` die korrekte `DATABASE_URL` enthält. Optional kannst du hier auch `GOOGLE_CLIENT_ID` und `GOOGLE_CLIENT_SECRET` hinterlegen, wenn du den Google-Login aktivieren möchtest.
 
 3. Wende die aktuellen Prisma-Migrationen an (Auth, Moderation, Likes/Kommentare, Supporter-Warteliste):
 
@@ -32,7 +32,7 @@
 
 - Registriere dich über `/register`. Der erste Account wird automatisch **Owner**.
 - Owner können im Dashboard (`/dashboard`) Rollen zuweisen (`USER`, `SUPPORTER`, `VERIFIED`, `MODERATOR`, `ADMIN`, `OWNER`) und Accounts verifizieren/sperren.
-- Login erfolgt mit E-Mail & Passwort über `/login` (NextAuth Credentials Provider).
+- Login erfolgt wahlweise mit E-Mail & Passwort oder – falls in `.env` bzw. auf Render hinterlegt – via Google OAuth über `/login` (NextAuth Credentials + Google Provider).
 
 ## Moderation & Datenpflege
 

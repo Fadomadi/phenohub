@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Lamp, Leaf, Ruler, Star as StarIcon, StarHalf as StarHalfIcon } from "lucide-react";
+import { ArrowLeft, Lamp, Leaf, Ruler, Star as StarIcon, StarHalf as StarHalfIcon, Sun } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { normalizeTmpfilesUrl } from "@/lib/images";
 import ReportCommentsSection from "@/components/ReportCommentsSection";
@@ -17,6 +17,7 @@ type RouteParams = { id: string };
 
 type ReportPageProps = {
   params: Promise<RouteParams>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 type AdditionalInfo = {
@@ -24,6 +25,7 @@ type AdditionalInfo = {
     lampType?: string | null;
     tentSize?: string | null;
     medium?: string | null;
+    environment?: string | null;
   };
   extras?: {
     washerGenetics?: string | null;
@@ -243,6 +245,10 @@ const parseAdditionalInfo = (value: unknown): AdditionalInfo => {
         typeof setupRecord.medium === "string" && setupRecord.medium.trim().length > 0
           ? setupRecord.medium
           : null,
+      environment:
+        typeof setupRecord.environment === "string" && setupRecord.environment.trim().length > 0
+          ? setupRecord.environment
+          : null,
     };
   }
 
@@ -280,11 +286,13 @@ const parseAdditionalInfo = (value: unknown): AdditionalInfo => {
 
 const extractSetupFromContent = (content: string) => {
   const lampMatch = content.match(/-\s*(?:Lampe|Watt):\s*([^\n]+)/i);
+  const environmentMatch = content.match(/-\s*Umgebung:\s*([^\n]+)/i);
   const tentMatch = content.match(/-\s*Zelt:\s*([^\n]+)/i);
   const mediumMatch = content.match(/-\s*Medium:\s*([^\n]+)/i);
 
   return {
     lampType: lampMatch?.[1]?.trim() || null,
+    environment: environmentMatch?.[1]?.trim() || null,
     tentSize: tentMatch?.[1]?.trim() || null,
     medium: mediumMatch?.[1]?.trim() || null,
   };
@@ -390,14 +398,22 @@ const renderStars = (value: number, title?: string | null) => {
   );
 };
 
-export default async function ReportPage({ params }: ReportPageProps) {
+export default async function ReportPage({ params, searchParams }: ReportPageProps) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const previewFlag = resolvedSearchParams?.preview;
+  const previewRequested = Array.isArray(previewFlag)
+    ? previewFlag.includes("1") || previewFlag.includes("true")
+    : previewFlag === "1" || previewFlag === "true";
+
   const id = Number(resolvedParams.id);
   if (Number.isNaN(id)) {
     notFound();
   }
 
   const session = await getServerSession(authConfig);
+  const userRole = session?.user?.role ?? "USER";
+  const isModerator = ["MODERATOR", "ADMIN", "OWNER"].includes(userRole);
 
   let report = await fetchReport(id);
 
@@ -406,7 +422,9 @@ export default async function ReportPage({ params }: ReportPageProps) {
   }
 
   if (report.status !== "PUBLISHED") {
-    notFound();
+    if (!(previewRequested && isModerator)) {
+      notFound();
+    }
   }
 
   try {
@@ -560,8 +578,12 @@ export default async function ReportPage({ params }: ReportPageProps) {
     };
   });
 
+  const isPreviewMode = report.status !== "PUBLISHED";
+
   const createdAtLabel = formatDate(report.createdAt);
-  const publishedLabel = formatDate(report.publishedAt ?? report.createdAt);
+  const publishedLabel = isPreviewMode
+    ? "Noch nicht veröffentlicht"
+    : formatDate(report.publishedAt ?? report.createdAt);
 
   const additionalInfo = parseAdditionalInfo((report as unknown as { additionalInfo?: unknown }).additionalInfo);
   const fallbackSetup = extractSetupFromContent(report.content ?? "");
@@ -579,13 +601,23 @@ export default async function ReportPage({ params }: ReportPageProps) {
     hydro: "Hydro",
     aero: "Aeroponik",
   };
+  const environmentLabelMap: Record<string, string> = {
+    indoor: "Indoor",
+    outdoor: "Outdoor",
+    greenhouse: "Greenhouse",
+  };
 
   const rawLamp = additionalInfo.setup?.lampType ?? fallbackSetup.lampType;
+  const rawEnvironment = additionalInfo.setup?.environment ?? fallbackSetup.environment;
   const rawTent = additionalInfo.setup?.tentSize ?? fallbackSetup.tentSize;
   const rawMedium = additionalInfo.setup?.medium ?? fallbackSetup.medium;
 
   const setupData = {
     lampType: rawLamp,
+    environment:
+      rawEnvironment && typeof rawEnvironment === "string"
+        ? environmentLabelMap[rawEnvironment.toLowerCase()] ?? rawEnvironment
+        : rawEnvironment ?? null,
     tentSize: rawTent ? tentLabelMap[rawTent] ?? rawTent : null,
     medium:
       rawMedium && typeof rawMedium === "string"
@@ -613,12 +645,8 @@ export default async function ReportPage({ params }: ReportPageProps) {
       label: "Autor",
       value: report.authorHandle || "Community",
     },
-    {
-      key: "created",
-      label: "Erstellt",
-      value: createdAtLabel,
-    },
   ];
+
   const metaCards = washerGeneticsLabel
     ? [
         ...baseMetaCards,
@@ -631,6 +659,12 @@ export default async function ReportPage({ params }: ReportPageProps) {
     : baseMetaCards;
 
   const setupItems = [
+    {
+      key: "environment",
+      label: "Umgebung",
+      value: setupData.environment,
+      icon: Sun,
+    },
     {
       key: "lampType",
       label: "Watt",
@@ -732,6 +766,9 @@ export default async function ReportPage({ params }: ReportPageProps) {
   ];
   const hasRatings = ratingEntries.some((entry) => entry.value > 0);
 
+  const normalizeText = (value: string) => value.replace(/\s+/g, " ").trim().toLowerCase();
+
+  const excerptText = typeof report.excerpt === "string" ? report.excerpt.trim() : "";
   const paragraphs = (report.content ?? "")
     .split(/\n{2,}/)
     .map((paragraph: string) => paragraph.trim())
@@ -739,7 +776,8 @@ export default async function ReportPage({ params }: ReportPageProps) {
       (paragraph: string) =>
         Boolean(paragraph) &&
         !/^setup:/i.test(paragraph) &&
-        !/^- (Lampe|Zelt|Medium):/i.test(paragraph),
+        !/^- (Lampe|Zelt|Medium):/i.test(paragraph) &&
+        normalizeText(paragraph) !== normalizeText(excerptText),
     );
 
   return (
@@ -751,6 +789,16 @@ export default async function ReportPage({ params }: ReportPageProps) {
         <ArrowLeft className="h-4 w-4" />
         Zur Übersicht
       </Link>
+
+      {isPreviewMode && (
+        <div className="mb-6 rounded-3xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900 shadow-sm">
+          <p className="font-semibold">Moderations-Vorschau</p>
+          <p>
+            Dieser Report ist noch nicht veröffentlicht. Du siehst eine Vorschau, die nur für
+            Moderatoren sichtbar ist.
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-10 xl:grid-cols-[minmax(0,1.6fr),minmax(0,0.9fr)]">
         <div className="space-y-8">
@@ -765,15 +813,20 @@ export default async function ReportPage({ params }: ReportPageProps) {
                     <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                       Veröffentlicht am {publishedLabel}
                     </span>
+                    <span className="ml-auto text-gray-400 dark:text-slate-500">
+                      Erstellt am {createdAtLabel}
+                    </span>
                   </div>
 
                   <div className="space-y-4">
                     <h1 className="text-3xl font-semibold leading-tight text-gray-900 dark:text-slate-100 md:text-4xl">
                       {report.title}
                     </h1>
-                    <p className="text-base leading-relaxed text-gray-600 dark:text-slate-300">
-                      {report.excerpt || "Zusammenfassung wird ergänzt."}
-                    </p>
+                    {excerptText.length === 0 && (
+                      <p className="text-base leading-relaxed text-gray-600 dark:text-slate-300">
+                        Zusammenfassung wird ergänzt.
+                      </p>
+                    )}
 
                     {paragraphs.length > 0 ? (
                       <section className="space-y-2">
@@ -802,7 +855,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
                 {reportImageStackItems.length > 0 && (
                   <ReportImageStack
                     items={reportImageStackItems}
-                    className="md:ml-8 md:translate-y-1 md:drop-shadow-xl lg:translate-y-0"
+                    className="md:ml-6 md:w-64 md:drop-shadow-xl"
                   />
                 )}
               </div>
@@ -813,24 +866,24 @@ export default async function ReportPage({ params }: ReportPageProps) {
                     <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
                       Überblick
                     </h2>
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="flex flex-wrap gap-2">
                       {metaCards.map((item) => (
                         <div
                           key={item.key}
-                          className="rounded-2xl border border-gray-200 bg-white/80 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
+                          className="min-w-[140px] flex-1 rounded-xl border border-gray-200 bg-white/85 px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-green-500 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
                         >
-                          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
                             {item.label}
                           </p>
                           {item.href ? (
                             <Link
                               href={item.href}
-                              className="mt-1 block text-sm font-semibold text-gray-900 underline decoration-green-400 decoration-2 underline-offset-4 transition hover:text-green-700 dark:text-slate-100 dark:hover:text-sky-300"
+                              className="mt-0.5 block text-[13px] font-semibold text-gray-900 underline decoration-green-400 decoration-2 underline-offset-4 transition hover:text-green-700 dark:text-slate-100 dark:hover:text-sky-300"
                             >
                               {item.value}
                             </Link>
                           ) : (
-                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-slate-100">
+                            <p className="mt-0.5 text-[13px] font-semibold text-gray-900 dark:text-slate-100">
                               {item.value}
                             </p>
                           )}
@@ -844,22 +897,22 @@ export default async function ReportPage({ params }: ReportPageProps) {
                       <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
                         Grow Setup
                       </h2>
-                      <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="grid gap-2 sm:grid-cols-3">
                         {setupItems.map((item) => {
                           const Icon = item.icon;
                           return (
                             <div
                               key={item.key}
-                              className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-white/80 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
+                              className="flex items-start gap-2 rounded-xl border border-gray-200 bg-white/85 px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-green-500 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
                             >
-                              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-600/10 text-green-700 dark:bg-sky-500/10 dark:text-sky-200">
-                                <Icon className="h-4 w-4" />
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600/10 text-green-700 dark:bg-sky-500/10 dark:text-sky-200">
+                                <Icon className="h-3.5 w-3.5" />
                               </div>
                               <div>
-                                <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
                                   {item.label}
                                 </p>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
+                                <p className="text-[13px] font-semibold text-gray-900 dark:text-slate-100">
                                   {item.value}
                                 </p>
                               </div>

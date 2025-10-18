@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 type ReportImageStackItem = {
   id: string;
@@ -38,13 +39,18 @@ const ReportImageEntry = ({ item }: { item: ReportImageStackItem }) => {
   return (
     <figure className="relative mx-auto aspect-[5/6] w-full max-w-[180px] overflow-hidden rounded-2xl bg-gray-100/80 shadow-md ring-1 ring-white/60 transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-green-200 dark:bg-slate-950/60 dark:ring-slate-800 md:mx-0 md:max-w-[210px] lg:max-w-[240px]">
       <div className="group block h-full w-full cursor-zoom-in">
-        <img
-          src={currentSource}
-          alt={alt}
-          loading={loading}
-          className="h-full w-full object-contain transition duration-200 group-hover:scale-105"
-          onError={handleError}
-        />
+        <div className="relative h-full w-full">
+          <Image
+            src={currentSource}
+            alt={alt}
+            fill
+            className="object-contain transition duration-200 group-hover:scale-105"
+            priority={loading === "eager"}
+            loading={loading === "eager" ? undefined : loading}
+            sizes="(max-width: 768px) 60vw, 240px"
+            onError={handleError}
+          />
+        </div>
       </div>
     </figure>
   );
@@ -187,10 +193,13 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
 
           <div className="w-full max-w-4xl space-y-4">
             <div className="relative max-h-[75vh] overflow-hidden rounded-3xl border border-white/30 bg-black/30 backdrop-blur">
-              <img
+              <Image
                 src={modalSource}
                 alt={activeItem.alt}
-                className="mx-auto max-h-[75vh] w-auto object-contain"
+                fill
+                className="object-contain"
+                priority
+                sizes="90vw"
                 onError={handleModalError}
               />
             </div>
@@ -211,11 +220,15 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
                     className={`relative h-20 overflow-hidden rounded-xl border ${index === activeIndex ? "border-green-400 ring-2 ring-green-300" : "border-white/30"}`}
                     aria-label={`${item.alt} auswählen`}
                   >
-                    <img
-                      src={item.sources[0]}
-                      alt={item.alt}
-                      className="h-full w-full object-cover"
-                    />
+                    <div className="relative h-full w-full">
+                      <Image
+                        src={item.sources[0]}
+                        alt={item.alt}
+                        fill
+                        className="object-cover"
+                        sizes="120px"
+                      />
+                    </div>
                   </button>
                 ))}
               </div>

@@ -13,6 +13,7 @@ import {
   FileText,
   ChevronDown,
   Sparkles,
+  Sun,
   Star as StarIcon,
   Trash2,
 } from "lucide-react";
@@ -23,6 +24,7 @@ type FormState = {
   providerSlug: string;
   lampType: string;
   tentSize: string;
+  cultivationType: string;
   medium: string;
   summary: string;
   images: File[];
@@ -40,6 +42,7 @@ const defaultState: FormState = {
   providerSlug: "",
   lampType: "",
   tentSize: "",
+  cultivationType: "",
   medium: "",
   summary: "",
   images: [],
@@ -72,6 +75,11 @@ const mediumOptions = [
   { value: "coco", label: "Kokos" },
   { value: "hydro", label: "Hydro" },
   { value: "aero", label: "Aeroponik" },
+];
+
+const cultivationOptions = [
+  { value: "indoor", label: "Indoor" },
+  { value: "outdoor", label: "Outdoor" },
 ];
 
 const ratingHints: Record<
@@ -144,7 +152,7 @@ const ReportSubmissionPanel = ({
     careRating: 0,
   });
   const baseFieldClasses =
-    "rounded-2xl border border-gray-200 bg-white/80 px-4 py-3 text-sm text-gray-900 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100";
+    "rounded-lg border border-gray-200 bg-white/95 px-3 py-2 text-base text-gray-900 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 sm:text-[15px] md:text-sm";
 
   useEffect(() => {
     if (!session?.user) return;
@@ -252,6 +260,7 @@ const ReportSubmissionPanel = ({
       setHasManualProviderSelection(true);
     }
   };
+
 
   const handleAnonymousToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked } = event.target;
@@ -414,6 +423,7 @@ const ReportSubmissionPanel = ({
           providerSlug: formState.providerSlug,
           lampType: formState.lampType,
           tentSize: formState.tentSize,
+          cultivationType: formState.cultivationType,
           medium: formState.medium,
           washerGenetics: formState.washerGenetics,
           summary: formState.summary,
@@ -471,13 +481,13 @@ const ReportSubmissionPanel = ({
     };
 
     return (
-      <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+      <div className="flex w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/70">
         <div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-slate-100">{label}</p>
-          <p className="text-xs text-gray-500 dark:text-slate-400">{description}</p>
+          <p className="text-[13px] font-semibold text-gray-800 dark:text-slate-100">{label}</p>
+          <p className="text-[11px] leading-snug text-gray-500 dark:text-slate-400">{description}</p>
         </div>
         <div
-          className="flex items-center gap-1"
+          className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-1"
           onMouseLeave={() => setRatingHover((prev) => ({ ...prev, [name]: 0 }))}
         >
           {[1, 2, 3, 4, 5].map((value) => (
@@ -486,7 +496,7 @@ const ReportSubmissionPanel = ({
               type="button"
               onClick={() => setValue(value)}
               title={hints?.[value - 1] ?? `${value} Sterne`}
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition sm:h-9 sm:w-9 ${
                 value <= displayValue
                   ? "bg-yellow-400 text-white shadow-sm"
                   : "bg-gray-100 text-gray-400 hover:bg-gray-200"
@@ -500,10 +510,10 @@ const ReportSubmissionPanel = ({
               onFocus={() => setRatingHover((prev) => ({ ...prev, [name]: value }))}
               onBlur={() => setRatingHover((prev) => ({ ...prev, [name]: 0 }))}
             >
-              <StarIcon className="h-4 w-4" />
+              <StarIcon className="h-3.5 w-3.5" />
             </button>
           ))}
-          <span className="ml-2 min-w-[160px] text-left text-xs text-gray-500 dark:text-slate-400">
+          <span className="w-full text-left text-[11px] text-gray-500 dark:text-slate-400 sm:ml-2 sm:w-auto">
             {displayValue > 0
               ? `${displayValue} von 5${
                   hints?.[displayValue - 1] ? ` – ${hints[displayValue - 1]}` : ""
@@ -511,7 +521,7 @@ const ReportSubmissionPanel = ({
               : "Noch nicht bewertet"}
           </span>
         </div>
-        <p className="mt-1 text-[10px] uppercase tracking-wide text-gray-400/80 dark:text-slate-500/80">
+        <p className="text-[10px] uppercase tracking-wide text-gray-400/80 dark:text-slate-500/80">
           1 ⭐ {hints?.[0] ?? "Sehr schlecht"} · 5 ⭐ {hints?.[4] ?? "Hervorragend"}
         </p>
       </div>
@@ -532,9 +542,9 @@ const ReportSubmissionPanel = ({
     : null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 py-10 backdrop-blur-sm">
-      <div className="max-h-full w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+    <div className="fixed inset-0 z-[60] flex min-h-full w-full overflow-hidden bg-black/45 backdrop-blur-sm sm:items-center sm:justify-center sm:px-4 sm:py-10">
+      <div className="relative flex h-full w-full flex-col overflow-hidden overflow-y-auto rounded-none bg-white shadow-none sm:mx-auto sm:h-auto sm:max-h-[85vh] sm:max-w-3xl sm:overflow-hidden sm:rounded-3xl sm:shadow-2xl">
+        <div className="flex items-start justify-between gap-3 border-b border-gray-200 px-4 py-4 sm:px-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Bericht einreichen</h2>
             <p className="text-sm text-gray-500">
@@ -550,29 +560,34 @@ const ReportSubmissionPanel = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="max-h-[70vh] space-y-6 overflow-y-auto px-6 py-6">
-          <div className="grid gap-4 lg:grid-cols-2">
-            <label className="flex flex-col gap-2">
-              <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 space-y-5 overflow-x-hidden overflow-y-auto px-4 py-4 sm:max-h-[70vh] sm:space-y-6 sm:px-6 sm:py-5"
+        >
+          <div className="grid gap-3 min-[380px]:grid-cols-2">
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <Leaf className="h-4 w-4 text-green-600" />
                 Sorte
               </span>
-            <div className="relative">
+              <div className="relative">
                 <input
                   list="cultivar-suggestions"
                   name="cultivarInput"
                   value={cultivarInput}
                   onChange={handleCultivarInputChange}
                   placeholder="z. B. Amnesia Core Cut"
-                  className={`${baseFieldClasses} pr-10`}
-                required
-              />
+                  className={`${baseFieldClasses} pr-8`}
+                  inputMode="text"
+                  autoComplete="off"
+                  required
+                />
                 <datalist id="cultivar-suggestions">
                   {cultivarOptions.map((option) => (
                     <option key={option.value} value={option.label} />
                   ))}
                 </datalist>
-                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               </div>
               {isCultivarLoading && (
                 <span className="text-xs text-gray-400">Sorten werden geladen …</span>
@@ -581,8 +596,8 @@ const ReportSubmissionPanel = ({
                 <span className="text-xs text-red-600">{cultivarFetchError}</span>
               )}
             </label>
-            <label className="flex flex-col gap-2">
-              <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <Building2 className="h-4 w-4 text-green-600" />
                 Anbieter
               </span>
@@ -604,8 +619,8 @@ const ReportSubmissionPanel = ({
                 <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               </div>
             </label>
-            <label className="flex flex-col gap-2">
-              <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <FileText className="h-4 w-4 text-green-600" />
                 Anzeigename (optional)
               </span>
@@ -618,12 +633,12 @@ const ReportSubmissionPanel = ({
                 disabled={formState.anonymous}
                 className={`${baseFieldClasses} ${formState.anonymous ? "bg-gray-100 text-gray-500" : ""}`}
               />
-              <span className="text-xs text-gray-400">
+              <span className="text-[11px] text-gray-400">
                 {formState.anonymous
                   ? "Anonyme Beiträge werden ohne Namen gespeichert."
                   : "Wenn leer, verwenden wir deinen Kontonamen (falls vorhanden)."}
               </span>
-              <div className="mt-1 inline-flex items-center gap-2 text-xs font-medium text-gray-600">
+              <div className="mt-1 inline-flex items-center gap-2 text-[11px] font-medium text-gray-600">
                 <input
                   id="anonymous-toggle"
                   type="checkbox"
@@ -636,8 +651,30 @@ const ReportSubmissionPanel = ({
                 </label>
               </div>
             </label>
-            <label className="flex flex-col gap-2">
-              <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                <Sun className="h-4 w-4 text-green-600" />
+                Indoor / Outdoor
+              </span>
+              <div className="relative">
+                <select
+                  name="cultivationType"
+                  value={formState.cultivationType}
+                  onChange={handleInputChange}
+                  className={`${baseFieldClasses} w-full appearance-none pr-6`}
+                >
+                  <option value="">Bitte auswählen …</option>
+                  {cultivationOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              </div>
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <Lamp className="h-4 w-4 text-green-600" />
                 Beleuchtung (Watt)
               </span>
@@ -650,52 +687,8 @@ const ReportSubmissionPanel = ({
                 className={baseFieldClasses}
               />
             </label>
-            <label className="flex flex-col gap-2">
-              <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Ruler className="h-4 w-4 text-green-600" />
-                Zeltgröße / Setup
-              </span>
-              <div className="relative">
-                <select
-                  name="tentSize"
-                  value={formState.tentSize}
-                  onChange={handleInputChange}
-                  className={`${baseFieldClasses} appearance-none pr-10`}
-                >
-                  <option value="">Optional auswählen …</option>
-                  {tentOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              </div>
-            </label>
-            <label className="flex flex-col gap-2">
-              <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Leaf className="h-4 w-4 text-green-600" />
-                Medium
-              </span>
-              <div className="relative">
-                <select
-                  name="medium"
-                  value={formState.medium}
-                  onChange={handleInputChange}
-                  className={`${baseFieldClasses} appearance-none pr-10`}
-                >
-                  <option value="">Optional auswählen …</option>
-                  {mediumOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              </div>
-            </label>
-            <label className="flex flex-col gap-2">
-              <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <Sparkles className="h-4 w-4 text-green-600" />
                 Washer-Genetik (optional)
               </span>
@@ -704,14 +697,58 @@ const ReportSubmissionPanel = ({
                   name="washerGenetics"
                   value={formState.washerGenetics}
                   onChange={handleInputChange}
-                  className={`${baseFieldClasses} appearance-none pr-10`}
+                  className={`${baseFieldClasses} w-full appearance-none pr-6`}
                 >
                   <option value="">Keine Angabe</option>
                   <option value="yes">Ja – gute Washer-Genetik</option>
                   <option value="no">Nein – nicht geeignet</option>
                   <option value="unknown">Unbekannt / nicht getestet</option>
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              </div>
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                <Ruler className="h-4 w-4 text-green-600" />
+                Zeltgröße / Setup
+              </span>
+              <div className="relative">
+                <select
+                  name="tentSize"
+                  value={formState.tentSize}
+                  onChange={handleInputChange}
+                  className={`${baseFieldClasses} w-full appearance-none pr-6 py-1`}
+                >
+                  <option value="">Optional auswählen …</option>
+                  {tentOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              </div>
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                <Leaf className="h-4 w-4 text-green-600" />
+                Medium
+              </span>
+              <div className="relative">
+                <select
+                  name="medium"
+                  value={formState.medium}
+                  onChange={handleInputChange}
+                  className={`${baseFieldClasses} w-full appearance-none pr-6`}
+                >
+                  <option value="">Optional auswählen …</option>
+                  {mediumOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               </div>
             </label>
           </div>

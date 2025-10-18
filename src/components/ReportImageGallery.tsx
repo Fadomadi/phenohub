@@ -3,6 +3,7 @@
 import type { MouseEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
+import Image from "next/image";
 
 type ReportImage = {
   direct: string;
@@ -24,6 +25,61 @@ type ReportImageGalleryProps = {
 const stopPropagation = (event: MouseEvent<HTMLDivElement>) => {
   event.stopPropagation();
   event.preventDefault();
+};
+
+type ProxyImageProps = {
+  src: string;
+  fallbackSrc?: string;
+  alt: string;
+  className?: string;
+  loading?: "lazy" | "eager";
+  sizes: string;
+  priority?: boolean;
+  onFinalError?: () => void;
+};
+
+const ProxyImage = ({
+  src,
+  fallbackSrc,
+  alt,
+  className,
+  loading = "lazy",
+  sizes,
+  priority,
+  onFinalError,
+}: ProxyImageProps) => {
+  const [activeSrc, setActiveSrc] = useState(src);
+  const [usedFallback, setUsedFallback] = useState(false);
+
+  useEffect(() => {
+    setActiveSrc(src);
+    setUsedFallback(false);
+  }, [src, fallbackSrc]);
+
+  const handleError = useCallback(() => {
+    if (!usedFallback && fallbackSrc && fallbackSrc !== activeSrc) {
+      setUsedFallback(true);
+      setActiveSrc(fallbackSrc);
+      return;
+    }
+    onFinalError?.();
+  }, [activeSrc, fallbackSrc, usedFallback, onFinalError]);
+
+  const isPriority = priority ?? loading === "eager";
+  const resolvedLoading = isPriority ? undefined : loading;
+
+  return (
+    <Image
+      src={activeSrc}
+      alt={alt}
+      fill
+      className={className}
+      priority={isPriority}
+      loading={resolvedLoading}
+      sizes={sizes}
+      onError={handleError}
+    />
+  );
 };
 
 const ReportImageGallery = ({
@@ -138,36 +194,30 @@ const ReportImageGallery = ({
             aria-label={`${coverImage.alt} vergrößert anzeigen`}
           >
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-slate-950">
-              <img
+              <ProxyImage
                 src={resolveSource(coverImage)}
+                fallbackSrc={
+                  coverImage.preview ? encodeProxyUrl(coverImage.preview) : undefined
+                }
                 alt={coverImage.alt}
-                className="absolute inset-0 h-full w-full object-contain"
+                className="object-contain"
                 loading="eager"
-                onError={(event) => {
-                  if (!coverImage.preview) return;
-                  const fallbackSrc = encodeProxyUrl(coverImage.preview);
-                  if (event.currentTarget.src !== fallbackSrc) {
-                    event.currentTarget.src = fallbackSrc;
-                  }
-                }}
+                sizes="(max-width: 768px) 100vw, 420px"
               />
             </div>
           </button>
         ) : (
           <div className="block w-full rounded-3xl border border-gray-200 bg-white p-4 text-left shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-slate-950">
-              <img
+              <ProxyImage
                 src={resolveSource(coverImage)}
+                fallbackSrc={
+                  coverImage.preview ? encodeProxyUrl(coverImage.preview) : undefined
+                }
                 alt={coverImage.alt}
-                className="absolute inset-0 h-full w-full object-contain"
+                className="object-contain"
                 loading="eager"
-                onError={(event) => {
-                  if (!coverImage.preview) return;
-                  const fallbackSrc = encodeProxyUrl(coverImage.preview);
-                  if (event.currentTarget.src !== fallbackSrc) {
-                    event.currentTarget.src = fallbackSrc;
-                  }
-                }}
+                sizes="(max-width: 768px) 100vw, 420px"
               />
             </div>
           </div>
@@ -191,18 +241,13 @@ const ReportImageGallery = ({
                   className="relative h-40 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 text-left transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/70"
                   aria-label={`${image.alt} vergrößert anzeigen`}
                 >
-                  <img
+                  <ProxyImage
                     src={resolveSource(image)}
+                    fallbackSrc={image.preview ? encodeProxyUrl(image.preview) : undefined}
                     alt={`${image.alt} – Bild ${index + thumbnailAltBase}`}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="object-cover"
                     loading="lazy"
-                    onError={(event) => {
-                      if (!image.preview) return;
-                      const fallbackSrc = encodeProxyUrl(image.preview);
-                      if (event.currentTarget.src !== fallbackSrc) {
-                        event.currentTarget.src = fallbackSrc;
-                      }
-                    }}
+                    sizes="(max-width: 640px) 45vw, 200px"
                   />
                 </button>
               ) : (
@@ -210,18 +255,13 @@ const ReportImageGallery = ({
                   key={`${image.direct}-${index}`}
                   className="relative h-40 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-slate-800 dark:bg-slate-900/70"
                 >
-                  <img
+                  <ProxyImage
                     src={resolveSource(image)}
+                    fallbackSrc={image.preview ? encodeProxyUrl(image.preview) : undefined}
                     alt={`${image.alt} – Bild ${index + thumbnailAltBase}`}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="object-cover"
                     loading="lazy"
-                    onError={(event) => {
-                      if (!image.preview) return;
-                      const fallbackSrc = encodeProxyUrl(image.preview);
-                      if (event.currentTarget.src !== fallbackSrc) {
-                        event.currentTarget.src = fallbackSrc;
-                      }
-                    }}
+                    sizes="(max-width: 640px) 45vw, 200px"
                   />
                 </div>
               ),
@@ -254,16 +294,16 @@ const ReportImageGallery = ({
             {modalSources.length > 0 ? (
               <>
                 <div className="relative h-[70vh] overflow-hidden rounded-3xl border border-white/30 bg-black/40 backdrop-blur">
-                  <img
+                  <Image
                     src={modalSources[0]}
                     alt={`${activeImage.alt} – Großansicht`}
-                    className="h-full w-full object-contain"
-                    loading="lazy"
-                    onError={(event) => {
-                      const target = event.currentTarget;
+                    fill
+                    className="object-contain"
+                    priority
+                    sizes="90vw"
+                    onError={() => {
                       setModalSources((previousSources) => {
                         if (previousSources.length <= 1) {
-                          target.alt = "Dieses Bild konnte nicht geladen werden.";
                           return [];
                         }
                         return previousSources.slice(1);

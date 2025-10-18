@@ -1,5 +1,6 @@
 import type { NextAuthOptions, User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
@@ -17,6 +18,26 @@ export const authConfig: NextAuthOptions = {
     strategy: "jwt",
   },
   providers: [
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            allowDangerousEmailAccountLinking: false,
+            profile(profile) {
+              return {
+                id: profile.sub,
+                name: profile.name ?? profile.email?.split("@")[0] ?? "Community",
+                email: profile.email,
+                image: profile.picture,
+                role: "USER",
+                status: "ACTIVE",
+                plan: "FREE",
+              };
+            },
+          }),
+        ]
+      : []),
     Credentials({
       name: "E-Mail Login",
       credentials: {
@@ -76,7 +97,16 @@ export const authConfig: NextAuthOptions = {
         token.email = extendedUser.email?.toLowerCase() ?? token.email;
         token.username = extendedUser.username ?? extendedUser.name ?? token.username;
         token.name = token.username ?? token.name;
-      } else if (token.email) {
+      }
+
+      const needsEnrichment =
+        !token.userId ||
+        !token.role ||
+        !token.status ||
+        !token.plan ||
+        !token.username;
+
+      if (needsEnrichment && token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email.toLowerCase() },
           select: { id: true, role: true, status: true, plan: true, username: true, name: true },
@@ -88,6 +118,10 @@ export const authConfig: NextAuthOptions = {
           token.plan = dbUser.plan;
           token.username = dbUser.username ?? dbUser.name ?? token.username;
           token.name = token.username ?? token.name;
+        } else {
+          token.role = token.role ?? "USER";
+          token.status = token.status ?? "ACTIVE";
+          token.plan = token.plan ?? "FREE";
         }
       }
       return token;

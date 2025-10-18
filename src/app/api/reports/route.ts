@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       providerSlug,
       lampType,
       tentSize,
+      cultivationType,
       medium,
       washerGenetics,
       ratings,
@@ -68,6 +69,14 @@ export async function POST(request: Request) {
       typeof tentSize === "string" && tentSize.trim().length > 0 ? tentSize.trim() : "";
     const normalizedMedium =
       typeof medium === "string" && medium.trim().length > 0 ? medium.trim() : "";
+    const cultivationInput =
+      typeof cultivationType === "string" && cultivationType.trim().length > 0
+        ? cultivationType.trim().toLowerCase()
+        : "";
+    const allowedCultivationValues = new Set(["indoor", "outdoor"]);
+    const normalizedCultivation = allowedCultivationValues.has(cultivationInput)
+      ? cultivationInput
+      : "";
     const washerInput = typeof washerGenetics === "string" ? washerGenetics.trim() : "";
     const washerLower = washerInput.toLowerCase();
     const washerLookup: Record<string, "yes" | "no" | "unknown"> = {
@@ -181,11 +190,12 @@ export async function POST(request: Request) {
     const overallRating = providedOverall > 0 ? providedOverall : computedOverall;
 
     const setupInfo =
-      normalizedLampType || normalizedTentSize || normalizedMedium
+      normalizedLampType || normalizedTentSize || normalizedMedium || normalizedCultivation
         ? {
             lampType: normalizedLampType || null,
             tentSize: normalizedTentSize || null,
             medium: normalizedMedium || null,
+            environment: normalizedCultivation || null,
           }
         : null;
 
@@ -219,6 +229,16 @@ export async function POST(request: Request) {
           }
         : null;
 
+    const environmentLabelMap: Record<string, string> = {
+      indoor: "Indoor",
+      outdoor: "Outdoor",
+      greenhouse: "Greenhouse",
+    };
+    const environmentLabel =
+      normalizedCultivation.length > 0
+        ? environmentLabelMap[normalizedCultivation] ?? normalizedCultivation
+        : "keine Angabe";
+
     const report = await prisma.report.create({
       data: {
         title,
@@ -230,7 +250,7 @@ export async function POST(request: Request) {
             .replace(/^-+|-+$/g, "") +
           `-${Date.now()}`,
         excerpt: summary.slice(0, 200),
-        content: `${summary}\n\nSetup:\n- Watt: ${normalizedLampType || "keine Angabe"}\n- Zelt: ${normalizedTentSize || "keine Angabe"}\n- Medium: ${normalizedMedium || "keine Angabe"}`,
+        content: `${summary}\n\nSetup:\n- Watt: ${normalizedLampType || "keine Angabe"}\n- Umgebung: ${environmentLabel}\n- Zelt: ${normalizedTentSize || "keine Angabe"}\n- Medium: ${normalizedMedium || "keine Angabe"}`,
         authorHandle: finalAuthorHandle || "@community",
         images: savedImages,
         ...(successfulUploads.length > 0
