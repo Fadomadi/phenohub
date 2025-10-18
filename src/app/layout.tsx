@@ -26,12 +26,12 @@ export const metadata: Metadata = {
     "Vergleiche Stecklinge, Anbieter und Erfahrungsberichte – PhenoHub bündelt Bewertungen, Bilder und Fakten an einem Ort.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const hasAgeConsent = cookieStore.get(AGE_COOKIE_NAME)?.value === AGE_COOKIE_VALUE;
 
   return (
