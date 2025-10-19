@@ -298,8 +298,10 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
                         {report.excerpt}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                        <span>@{report.author.replace("@", "")}</span>
-                        <span>•</span>
+                        {report.author && (
+                          <span>@{report.author.replace("@", "")}</span>
+                        )}
+                        {report.author && <span>•</span>}
                         <span>{report.provider}</span>
                         <span>•</span>
                         <span>Likes: {report.likes}</span>
