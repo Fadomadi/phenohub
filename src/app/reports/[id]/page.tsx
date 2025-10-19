@@ -817,11 +817,6 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
                   <h1 className="text-3xl font-semibold leading-tight text-gray-900 dark:text-slate-100 md:text-4xl">
                     {report.title}
                   </h1>
-                  {excerptText.length > 0 && (
-                    <p className="text-base leading-relaxed text-gray-600 dark:text-slate-300">
-                      {excerptText}
-                    </p>
-                  )}
                 </div>
               </header>
 

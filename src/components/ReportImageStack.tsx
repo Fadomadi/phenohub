@@ -37,7 +37,7 @@ const ReportImageEntry = ({ item }: { item: ReportImageStackItem }) => {
   }
 
   return (
-    <figure className="relative mx-auto aspect-[5/6] w-full max-w-[180px] overflow-hidden rounded-2xl bg-gray-100/80 shadow-md ring-1 ring-white/60 transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-green-200 dark:bg-slate-950/60 dark:ring-slate-800 md:mx-0 md:max-w-[210px] lg:max-w-[240px]">
+    <figure className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100/80 shadow-md ring-1 ring-white/60 transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-green-200 dark:bg-slate-950/60 dark:ring-slate-800">
       <div className="group block h-full w-full cursor-zoom-in">
         <div className="relative h-full w-full">
           <img
@@ -57,12 +57,7 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
   const normalizedItems = Array.isArray(items) ? items : [];
   const hasItems = normalizedItems.length > 0;
 
-  const containerClassName = [
-    "space-y-4 md:flex md:w-auto md:flex-col md:items-end md:space-y-4 md:self-start md:shrink-0",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const containerClassName = ["space-y-4", className].filter(Boolean).join(" ");
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [activeSourceIndex, setActiveSourceIndex] = useState(0);
@@ -145,7 +140,7 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
             key={item.id}
             type="button"
             onClick={() => openModal(index)}
-            className="block rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+            className="block w-full rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
             aria-label={`${item.alt} vergrößern`}
           >
             <ReportImageEntry item={item} />
