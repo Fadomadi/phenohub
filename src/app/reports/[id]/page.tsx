@@ -804,15 +804,13 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
           <section className="relative overflow-hidden rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-white to-green-50/70 p-6 shadow-lg shadow-green-100/40 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-900 md:p-8">
             <div className="space-y-10">
               <header className="space-y-4">
-                <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                  <div className="flex w-full items-center justify-between gap-3 border-b border-gray-100 pb-3 dark:border-slate-800 md:flex-row md:border-b-0 md:pb-0">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-green-600/15 px-3 py-1 text-green-700 dark:bg-sky-500/15 dark:text-sky-200">
-                      Community Report
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300 md:ml-auto">
-                      Veröffentlicht am {publishedLabel}
-                    </span>
-                  </div>
+                <div className="flex w-full flex-col items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 md:flex-row md:items-center md:justify-between md:gap-3">
+                  <span className="inline-flex items-center gap-1 self-start rounded-full bg-green-600/15 px-3 py-1 text-green-700 dark:bg-sky-500/15 dark:text-sky-200 md:self-auto">
+                    Community Report
+                  </span>
+                  <span className="inline-flex items-center gap-1 self-end rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300 md:self-auto">
+                    Veröffentlicht am {publishedLabel}
+                  </span>
                 </div>
 
                 <div className="space-y-4">
