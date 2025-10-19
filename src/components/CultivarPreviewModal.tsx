@@ -5,6 +5,7 @@ import { X, TrendingUp } from "lucide-react";
 import type { Cultivar, Report } from "@/types/domain";
 import ThumbnailCell from "@/components/ThumbnailCell";
 import ReportImageStack, { type ReportImageStackItem } from "@/components/ReportImageStack";
+import { normalizeTmpfilesUrl } from "@/lib/images";
 
 type CultivarPreviewModalProps = {
   cultivar: Cultivar;
@@ -17,22 +18,37 @@ const CultivarPreviewModal = ({
   reports,
   onClose,
 }: CultivarPreviewModalProps) => {
-  const previewImages =
-    (Array.isArray(cultivar.recentImages) && cultivar.recentImages.length > 0
-      ? cultivar.recentImages
-      : cultivar.thumbnails
-    ).slice(0, 12);
+  const aggregatedImages = reports.flatMap((report) => {
+    const images = Array.isArray(report.images) ? report.images : [];
+    return images
+      .filter((image): image is string => typeof image === "string" && image.trim().length > 0)
+      .map((image) => ({ image, alt: report.title }));
+  });
 
-  const previewItems: ReportImageStackItem[] = previewImages.map((image, index) => {
-    const sources = [image];
-    if (typeof image === "string" && image.startsWith("http")) {
-      sources.unshift(`/api/image-proxy?url=${encodeURIComponent(image)}`);
-    }
+  const fallbackImages = (Array.isArray(cultivar.recentImages) && cultivar.recentImages.length > 0
+    ? cultivar.recentImages
+    : cultivar.thumbnails
+  ).filter((image): image is string => typeof image === "string" && image.trim().length > 0);
+
+  const previewCandidates =
+    aggregatedImages.length > 0
+      ? aggregatedImages
+      : fallbackImages.map((image) => ({ image, alt: cultivar.name }));
+
+  const previewItems: ReportImageStackItem[] = previewCandidates.slice(0, 12).map((entry, index) => {
+    const normalized = normalizeTmpfilesUrl(entry.image);
+    const direct = typeof normalized.direct === "string" && normalized.direct.length > 0 ? normalized.direct : entry.image;
+    const preview = typeof normalized.preview === "string" && normalized.preview.length > 0 ? normalized.preview : direct;
+    const candidates = [direct, preview].filter((value, idx, arr) => value && arr.indexOf(value) === idx);
+    const sources = candidates.flatMap((value) =>
+      value.startsWith("http") ? [`/api/image-proxy?url=${encodeURIComponent(value)}`, value] : [value],
+    );
+
     return {
       id: `${cultivar.slug}-modal-${index}`,
-      alt: `${cultivar.name} – Bild ${index + 1}`,
+      alt: `${entry.alt} – Bild ${index + 1}`,
       loading: index === 0 ? "eager" : "lazy",
-      sources,
+      sources: Array.from(new Set(sources)),
     };
   });
 

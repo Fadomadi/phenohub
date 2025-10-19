@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import ThumbnailCell from "@/components/ThumbnailCell";
 import ReportImageStack, { type ReportImageStackItem } from "@/components/ReportImageStack";
 import { mockCultivars, mockReports } from "@/data/mockData";
+import { normalizeTmpfilesUrl } from "@/lib/images";
 
 type CultivarPageProps = {
   params: Promise<{ slug: string }>;
@@ -140,22 +141,45 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
 
   const relatedReports = cultivar.reports ?? [];
 
-  const previewImages = Array.isArray(cultivar.previewImages) && cultivar.previewImages.length > 0
+  const aggregatedImages = relatedReports.flatMap((report) => {
+    const images = Array.isArray(report.images) ? report.images : [];
+    return images
+      .filter((image): image is string => typeof image === "string" && image.trim().length > 0)
+      .map((image) => ({ image, reportTitle: report.title }));
+  });
+
+  const fallbackThumbnails = (Array.isArray(cultivar.previewImages) && cultivar.previewImages.length > 0
     ? cultivar.previewImages
     : Array.isArray(cultivar.thumbnails)
       ? cultivar.thumbnails
-      : [];
+      : []
+  ).filter((image): image is string => typeof image === "string" && image.trim().length > 0);
 
-  const previewStackItems: ReportImageStackItem[] = previewImages.slice(0, 6).map((image, index) => {
-    const sources = [image];
-    if (typeof image === "string" && image.startsWith("http")) {
-      sources.unshift(`/api/image-proxy?url=${encodeURIComponent(image)}`);
-    }
+  const previewCandidates =
+    aggregatedImages.length > 0
+      ? aggregatedImages.map((entry) => ({
+          image: entry.image,
+          alt: entry.reportTitle,
+        }))
+      : fallbackThumbnails.map((image) => ({
+          image,
+          alt: cultivar.name,
+        }));
+
+  const previewStackItems: ReportImageStackItem[] = previewCandidates.slice(0, 6).map((entry, index) => {
+    const normalized = normalizeTmpfilesUrl(entry.image);
+    const direct = typeof normalized.direct === "string" && normalized.direct.length > 0 ? normalized.direct : entry.image;
+    const preview = typeof normalized.preview === "string" && normalized.preview.length > 0 ? normalized.preview : direct;
+    const candidates = [direct, preview].filter((value, idx, arr) => value && arr.indexOf(value) === idx);
+    const sources = candidates.flatMap((value) =>
+      value.startsWith("http") ? [`/api/image-proxy?url=${encodeURIComponent(value)}`, value] : [value],
+    );
+
     return {
       id: `${cultivar.slug}-preview-${index}`,
-      alt: `${cultivar.name} – Bild ${index + 1}`,
+      alt: `${entry.alt} – Bild ${index + 1}`,
       loading: index === 0 ? "eager" : "lazy",
-      sources,
+      sources: Array.from(new Set(sources)),
     };
   });
 
@@ -247,10 +271,7 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
               <div className="mb-1 hidden lg:block text-sm font-medium text-gray-400 pl-1">Bilder</div>
               {previewStackItems.length > 0 ? (
                 <div className="rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-                  <ReportImageStack
-                    items={previewStackItems}
-                    className="grid grid-cols-3 gap-2"
-                  />
+                  <ReportImageStack items={previewStackItems} className="md:w-full" />
                 </div>
               ) : (
                 <div className="col-span-3 flex min-h-[120px] items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
