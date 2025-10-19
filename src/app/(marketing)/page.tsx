@@ -837,24 +837,36 @@ const StecklingsIndex = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9">
-              {topCultivars.map((cultivar) => (
-                <button
-                  key={cultivar.id}
-                  type="button"
-                  onClick={() => setPreviewCultivarSlug(cultivar.slug)}
-                  className="group overflow-hidden rounded-lg border border-gray-200 bg-white text-left transition-all hover:border-green-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-sky-500"
-                >
-                  <div className="grid grid-cols-3 gap-0.5 bg-gray-50 p-0.5 dark:bg-slate-800/80">
-                    {cultivar.thumbnails.slice(0, 6).map((thumb, index) => (
-                      <ThumbnailCell
-                        key={index}
-                        value={thumb}
-                        alt={`${cultivar.name} Thumbnail ${index + 1}`}
-                        className="flex aspect-square items-center justify-center overflow-hidden rounded bg-green-100 text-xs dark:bg-slate-900/70"
-                        imgClassName="h-full w-full object-cover"
-                      />
-                    ))}
-                  </div>
+              {topCultivars.map((cultivar) => {
+                const previewImages = (cultivar.recentImages?.length
+                  ? cultivar.recentImages
+                  : cultivar.thumbnails
+                ).slice(0, 6);
+
+                return (
+                  <button
+                    key={cultivar.id}
+                    type="button"
+                    onClick={() => setPreviewCultivarSlug(cultivar.slug)}
+                    className="group overflow-hidden rounded-lg border border-gray-200 bg-white text-left transition-all hover:border-green-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-sky-500"
+                  >
+                    <div className="grid grid-cols-3 gap-0.5 bg-gray-50 p-0.5 dark:bg-slate-800/80">
+                      {previewImages.length > 0 ? (
+                        previewImages.map((thumb, index) => (
+                          <ThumbnailCell
+                            key={index}
+                            value={thumb}
+                            alt={`${cultivar.name} Bild ${index + 1}`}
+                            className="flex aspect-square items-center justify-center overflow-hidden rounded bg-green-100 text-xs dark:bg-slate-900/70"
+                            imgClassName="h-full w-full object-cover"
+                          />
+                        ))
+                      ) : (
+                        <div className="col-span-3 flex aspect-[3/1] items-center justify-center rounded bg-green-100 text-xs font-semibold text-green-700 dark:bg-slate-900/70 dark:text-sky-200">
+                          Keine Bilder vorhanden
+                        </div>
+                      )}
+                    </div>
                   <div className="p-1.5">
                     <div className="mb-0.5 flex items-center gap-0.5">
                       <h3 className="flex-1 line-clamp-1 text-xs font-bold text-gray-900 transition-colors group-hover:text-green-600 dark:text-slate-100 dark:group-hover:text-sky-300">
@@ -874,8 +886,9 @@ const StecklingsIndex = () => {
                     </div>
                     {renderOfferingBadges(cultivar.offerings)}
                   </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

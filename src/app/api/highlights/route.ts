@@ -54,6 +54,9 @@ type CultivarInput = {
     priceEur?: unknown;
     category?: string | null;
   }> | null;
+  reports?: Array<{
+    images: string[];
+  }>;
 };
 
 type ProviderInput = {
@@ -88,28 +91,40 @@ type ReportInput = {
   excerpt?: string | null;
 };
 
-const mapCultivar = (cultivar: CultivarInput) => ({
-  id: cultivar.id,
-  slug: cultivar.slug,
-  name: cultivar.name,
-  aka: cultivar.aka,
-  cloneOnly: cultivar.cloneOnly,
-  reportCount: cultivar.reportCount,
-  avgRating: Number(cultivar.avgRating),
-  imageCount: cultivar.imageCount,
-  trending: cultivar.trending,
-  thumbnails: cultivar.thumbnails,
-  breeder: cultivar.breeder ?? null,
-  offerings: (cultivar.offerings ?? []).map((offering) => ({
-    providerName: offering.provider?.name ?? "",
-    providerSlug: offering.provider?.slug ?? "",
-    priceEur:
-      offering.priceEur !== null && offering.priceEur !== undefined
-        ? Number(offering.priceEur)
-        : null,
-    category: offering.category ?? null,
-  })),
-});
+const mapCultivar = (cultivar: CultivarInput) => {
+  const thumbnails = Array.isArray(cultivar.thumbnails)
+    ? cultivar.thumbnails.filter((value): value is string => typeof value === "string")
+    : [];
+  const recentImages = (cultivar.reports ?? [])
+    .flatMap((report) => (Array.isArray(report.images) ? report.images : []))
+    .filter((url): url is string => typeof url === "string" && url.length > 0);
+
+  const uniqueRecent = Array.from(new Set(recentImages)).slice(0, TAKE);
+
+  return {
+    id: cultivar.id,
+    slug: cultivar.slug,
+    name: cultivar.name,
+    aka: cultivar.aka,
+    cloneOnly: cultivar.cloneOnly,
+    reportCount: cultivar.reportCount,
+    avgRating: Number(cultivar.avgRating),
+    imageCount: cultivar.imageCount,
+    trending: cultivar.trending,
+    thumbnails,
+    recentImages: uniqueRecent.length > 0 ? uniqueRecent : undefined,
+    breeder: cultivar.breeder ?? null,
+    offerings: (cultivar.offerings ?? []).map((offering) => ({
+      providerName: offering.provider?.name ?? "",
+      providerSlug: offering.provider?.slug ?? "",
+      priceEur:
+        offering.priceEur !== null && offering.priceEur !== undefined
+          ? Number(offering.priceEur)
+          : null,
+      category: offering.category ?? null,
+    })),
+  };
+};
 
 const mapProvider = (provider: ProviderInput) => ({
   id: provider.id,
@@ -188,6 +203,7 @@ const mapMockCultivar = (cultivar: (typeof mockCultivars)[number]): CultivarHigh
   imageCount: cultivar.imageCount,
   trending: cultivar.trending,
   thumbnails: cultivar.thumbnails,
+  recentImages: cultivar.thumbnails.slice(0, TAKE),
   breeder: cultivar.breeder ?? null,
   offerings: [],
 });
@@ -269,6 +285,17 @@ export async function GET() {
         offerings: {
           include: {
             provider: { select: { name: true, slug: true } },
+          },
+        },
+        reports: {
+          where: { status: "PUBLISHED" },
+          orderBy: [
+            { publishedAt: "desc" },
+            { createdAt: "desc" },
+          ],
+          take: TAKE,
+          select: {
+            images: true,
           },
         },
       },

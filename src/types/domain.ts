@@ -9,6 +9,7 @@ export type Cultivar = {
   imageCount: number;
   trending: boolean;
   thumbnails: string[];
+  recentImages?: string[];
   breeder?: string | null;
   offerings?: Array<{
     providerName: string;
