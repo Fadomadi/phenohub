@@ -4,7 +4,7 @@ import Link from "next/link";
 import { X, TrendingUp } from "lucide-react";
 import type { Cultivar, Report } from "@/types/domain";
 import ThumbnailCell from "@/components/ThumbnailCell";
-import GalleryPreview from "@/components/GalleryPreview";
+import CultivarGallery from "@/components/CultivarGallery";
 
 type CultivarPreviewModalProps = {
   cultivar: Cultivar;
@@ -17,6 +17,12 @@ const CultivarPreviewModal = ({
   reports,
   onClose,
 }: CultivarPreviewModalProps) => {
+  const previewImages =
+    (Array.isArray(cultivar.recentImages) && cultivar.recentImages.length > 0
+      ? cultivar.recentImages
+      : cultivar.thumbnails
+    ).slice(0, 12);
+
   return (
     <div className="fixed inset-0 z-[65] flex items-center justify-center bg-black/50 px-4 py-10 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl border border-green-100 bg-white shadow-2xl shadow-green-200/40">
@@ -97,10 +103,7 @@ const CultivarPreviewModal = ({
 
           <div className="space-y-4">
             <div className="rounded-3xl border border-gray-100 bg-white p-3">
-              <GalleryPreview
-                images={(cultivar.recentImages?.length ? cultivar.recentImages : cultivar.thumbnails).slice(0, 12)}
-                name={cultivar.name}
-              />
+              <CultivarGallery images={previewImages} name={cultivar.name} />
             </div>
 
             <div className="rounded-3xl border border-gray-100 bg-gray-50 p-4">

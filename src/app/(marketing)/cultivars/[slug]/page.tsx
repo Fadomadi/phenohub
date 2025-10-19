@@ -232,9 +232,11 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
             {/* Rechte Spalte: Bilder */}
             <div className="flex flex-none flex-col gap-2 lg:w-72 lg:pl-10 lg:justify-center">
               <div className="mb-1 hidden lg:block text-sm font-medium text-gray-400 pl-1">Bilder</div>
-              <div className="grid grid-cols-3 gap-2 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-                <CultivarGallery images={previewImages} name={cultivar.name} />
-              </div>
+              <CultivarGallery
+                images={previewImages}
+                name={cultivar.name}
+                className="rounded-3xl border border-gray-100 bg-white p-3 shadow-sm"
+              />
 
               {providerNames.length > 0 && (
                 <div className="rounded-3xl border border-green-100 bg-green-50/60 p-4">
