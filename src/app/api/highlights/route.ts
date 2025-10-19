@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import authConfig from "@/lib/auth";
 import { getClientLikeId } from "@/lib/likes";
 import { mockCultivars, mockProviders, mockReports, mockSeeds } from "@/data/mockData";
+import { getHighlightSeedConfig } from "@/lib/highlightSettings";
 
 const TAKE = 6;
 
@@ -352,12 +353,34 @@ export async function GET() {
     reportsPayload = mockReports.slice(0, TAKE).map(mapMockReport);
   }
 
-  const seeds = mockSeeds.slice(0, TAKE).map(mapSeed);
+  let seedsEnabled = true;
+  let seeds = mockSeeds.slice(0, TAKE).map(mapSeed);
+
+  try {
+    const seedConfig = await getHighlightSeedConfig(prisma);
+    seedsEnabled = Boolean(seedConfig.showSeeds);
+    if (seedsEnabled) {
+      seeds =
+        seedConfig.seeds.length > 0
+          ? seedConfig.seeds.map((seed, index) => ({
+              ...seed,
+              id: seed.id ?? index + 1,
+              popularity: Number.isFinite(seed.popularity) ? seed.popularity : 0,
+            }))
+          : mockSeeds.slice(0, TAKE).map(mapSeed);
+    } else {
+      seeds = [];
+    }
+  } catch (error) {
+    console.warn("[HIGHLIGHTS_API] seed config lookup failed – falling back to defaults", error);
+    seedsEnabled = seeds.length > 0;
+  }
 
   return NextResponse.json({
     cultivars,
     providers,
     reports: reportsPayload,
     seeds,
+    seedsEnabled,
   });
 }

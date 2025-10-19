@@ -204,6 +204,14 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model SiteSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model VerificationToken {
   identifier String
   token      String   @unique

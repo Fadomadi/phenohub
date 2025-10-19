@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
+import type { Seed } from "@/types/domain";
 
 type ReportSummary = {
   id: number;
@@ -44,6 +45,24 @@ const REPORT_TABS: Array<"PENDING" | "PUBLISHED" | "REJECTED"> = [
 const ROLE_OPTIONS = ["USER", "SUPPORTER", "VERIFIED", "MODERATOR", "ADMIN", "OWNER"];
 const STATUS_OPTIONS = ["ACTIVE", "INVITED", "SUSPENDED"];
 
+type HighlightSeedConfig = {
+  showSeeds: boolean;
+  seeds: Seed[];
+};
+
+const createSeedTemplate = (id: number): Seed => ({
+  id,
+  slug: `seed-${id}`,
+  name: "",
+  breeder: "",
+  genetics: "",
+  type: "Feminisiert",
+  floweringTime: "",
+  yield: "",
+  popularity: 0,
+  thumbnails: [],
+});
+
 const DashboardPage = () => {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<"PENDING" | "PUBLISHED" | "REJECTED">("PENDING");
@@ -55,6 +74,14 @@ const DashboardPage = () => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<ReportSummary | null>(null);
+  const [highlightSettings, setHighlightSettings] = useState<HighlightSeedConfig | null>(null);
+  const [highlightSettingsLoading, setHighlightSettingsLoading] = useState(false);
+  const [highlightSettingsError, setHighlightSettingsError] = useState<string | null>(null);
+  const [highlightSettingsSaveError, setHighlightSettingsSaveError] = useState<string | null>(
+    null,
+  );
+  const [highlightSettingsSuccess, setHighlightSettingsSuccess] = useState<string | null>(null);
+  const [highlightSettingsSaving, setHighlightSettingsSaving] = useState(false);
 
   const isModerator = useMemo(
     () =>
@@ -134,6 +161,45 @@ const DashboardPage = () => {
     }
   }, [isOwner, loadUsers]);
 
+  const loadHighlightSettings = useCallback(async () => {
+    if (!isOwner) return;
+    setHighlightSettingsLoading(true);
+    setHighlightSettingsError(null);
+    setHighlightSettingsSaveError(null);
+    setHighlightSettingsSuccess(null);
+    try {
+      const response = await fetch("/api/admin/highlight-settings", { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.error || "Highlight-Einstellungen konnten nicht geladen werden.");
+      }
+      const config = result?.config as HighlightSeedConfig | undefined;
+      if (config) {
+        setHighlightSettings({
+          showSeeds: Boolean(config.showSeeds),
+          seeds: Array.isArray(config.seeds) ? config.seeds : [],
+        });
+      } else {
+        setHighlightSettings({ showSeeds: true, seeds: [] });
+      }
+    } catch (error) {
+      setHighlightSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Highlight-Einstellungen konnten nicht geladen werden.",
+      );
+      setHighlightSettings({ showSeeds: true, seeds: [] });
+    } finally {
+      setHighlightSettingsLoading(false);
+    }
+  }, [isOwner]);
+
+  useEffect(() => {
+    if (isOwner) {
+      void loadHighlightSettings();
+    }
+  }, [isOwner, loadHighlightSettings]);
+
   const mutateReport = useCallback(
     async (id: number, nextStatus: "PENDING" | "PUBLISHED" | "REJECTED", note?: string | null) => {
       const response = await fetch(`/api/admin/reports/${id}`, {
@@ -173,6 +239,126 @@ const DashboardPage = () => {
     },
     [],
   );
+
+  const updateSeedAtIndex = useCallback(
+    (index: number, updater: (seed: Seed) => Seed) => {
+      setHighlightSettings((previous) => {
+        if (!previous) return previous;
+        if (index < 0 || index >= previous.seeds.length) {
+          return previous;
+        }
+        const nextSeeds = [...previous.seeds];
+        nextSeeds[index] = updater(nextSeeds[index]);
+        return { ...previous, seeds: nextSeeds };
+      });
+    },
+    [],
+  );
+
+  const handleSeedFieldChange = useCallback(
+    (index: number, field: keyof Seed, value: string | number) => {
+      updateSeedAtIndex(index, (seed) => {
+        if (field === "popularity") {
+          const numericValue =
+            typeof value === "number"
+              ? value
+              : Number.isFinite(Number(value))
+                ? Number(value)
+                : seed.popularity;
+          return { ...seed, popularity: numericValue };
+        }
+
+        if (field === "thumbnails") {
+          const entries =
+            typeof value === "string"
+              ? value
+                  .split("\n")
+                  .map((line) => line.trim())
+                  .filter((line) => line.length > 0)
+              : seed.thumbnails;
+          return { ...seed, thumbnails: entries };
+        }
+
+        const nextValue = typeof value === "string" ? value : String(value);
+        return { ...seed, [field]: nextValue };
+      });
+    },
+    [updateSeedAtIndex],
+  );
+
+  const addSeedEntry = useCallback(() => {
+    setHighlightSettings((previous) => {
+      if (!previous) return previous;
+      const id = Date.now();
+      return {
+        ...previous,
+        seeds: [...previous.seeds, createSeedTemplate(id)],
+      };
+    });
+  }, []);
+
+  const removeSeedEntry = useCallback((index: number) => {
+    setHighlightSettings((previous) => {
+      if (!previous) return previous;
+      return {
+        ...previous,
+        seeds: previous.seeds.filter((_, itemIndex) => itemIndex !== index),
+      };
+    });
+  }, []);
+
+  const moveSeedEntry = useCallback((index: number, direction: "up" | "down") => {
+    setHighlightSettings((previous) => {
+      if (!previous) return previous;
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= previous.seeds.length) {
+        return previous;
+      }
+      const seeds = [...previous.seeds];
+      const [current] = seeds.splice(index, 1);
+      seeds.splice(targetIndex, 0, current);
+      return { ...previous, seeds };
+    });
+  }, []);
+
+  const handleHighlightVisibilityToggle = useCallback((next: boolean) => {
+    setHighlightSettings((previous) => {
+      if (!previous) return previous;
+      return { ...previous, showSeeds: next };
+    });
+  }, []);
+
+  const handleSaveHighlightSettings = useCallback(async () => {
+    if (!highlightSettings) return;
+    setHighlightSettingsSaving(true);
+    setHighlightSettingsSaveError(null);
+    setHighlightSettingsSuccess(null);
+    try {
+      const response = await fetch("/api/admin/highlight-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(highlightSettings),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.error || "Einstellungen konnten nicht gespeichert werden.");
+      }
+      const config = result?.config as HighlightSeedConfig | undefined;
+      if (config) {
+        setHighlightSettings({
+          showSeeds: Boolean(config.showSeeds),
+          seeds: Array.isArray(config.seeds) ? config.seeds : [],
+        });
+      }
+      setHighlightSettingsSuccess("Highlight-Einstellungen gespeichert.");
+    } catch (error) {
+      setHighlightSettingsSaveError(
+        error instanceof Error ? error.message : "Einstellungen konnten nicht gespeichert werden.",
+      );
+    } finally {
+      setHighlightSettingsSaving(false);
+    }
+  }, [highlightSettings]);
 
   if (status === "loading") {
     return (
@@ -362,10 +548,265 @@ const DashboardPage = () => {
       </section>
 
       {selectedReport && (
-        <ReportDetailsModal
-          report={selectedReport}
-          onClose={() => setSelectedReport(null)}
-        />
+      <ReportDetailsModal
+        report={selectedReport}
+        onClose={() => setSelectedReport(null)}
+      />
+    )}
+
+      {isOwner && (
+        <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Startseiten-Highlights</h2>
+              <p className="text-sm text-gray-500">
+                Steuere, ob „Beliebte Samen“ angezeigt werden und passe Inhalte manuell an.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={loadHighlightSettings}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                disabled={highlightSettingsLoading}
+              >
+                Neu laden
+              </button>
+            </div>
+          </div>
+
+          {highlightSettingsError && (
+            <p className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {highlightSettingsError}
+            </p>
+          )}
+          {highlightSettingsSaveError && (
+            <p className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {highlightSettingsSaveError}
+            </p>
+          )}
+          {highlightSettingsSuccess && (
+            <p className="mb-4 rounded-2xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+              {highlightSettingsSuccess}
+            </p>
+          )}
+
+          {highlightSettingsLoading ? (
+            <p className="text-sm text-gray-500">Lade Highlight-Einstellungen …</p>
+          ) : highlightSettings ? (
+            <div className="space-y-5">
+              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-gray-800">
+                    „Beliebte Samen“ für Besucher anzeigen
+                  </span>
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    checked={highlightSettings.showSeeds}
+                    onChange={(event) => handleHighlightVisibilityToggle(event.target.checked)}
+                  />
+                </div>
+                <span className="text-xs text-gray-500">
+                  Wenn deaktiviert, sehen nur Admins diese Sektion. Besucher bekommen keine Samen-Highlights
+                  auf der Startseite.
+                </span>
+              </label>
+
+              <div className="space-y-4">
+                {highlightSettings.seeds.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+                    Noch keine Samen hinterlegt. Füge Einträge hinzu, um die Highlights manuell zu befüllen.
+                  </p>
+                ) : (
+                  highlightSettings.seeds.map((seed, index) => (
+                    <div
+                      key={seed.id}
+                      className="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm"
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-900">
+                            Seed #{index + 1}: {seed.name || "Unbenannt"}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Zeigt Name, Breeder, Typ und Bilder in der „Beliebte Samen“-Sektion.
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => moveSeedEntry(index, "up")}
+                            disabled={index === 0}
+                            className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Nach oben
+                          </button>
+                          <button
+                            onClick={() => moveSeedEntry(index, "down")}
+                            disabled={index === highlightSettings.seeds.length - 1}
+                            className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Nach unten
+                          </button>
+                          <button
+                            onClick={() => removeSeedEntry(index)}
+                            className="rounded-lg border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                          >
+                            Entfernen
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Name
+                          </label>
+                          <input
+                            type="text"
+                            value={seed.name}
+                            onChange={(event) => handleSeedFieldChange(index, "name", event.target.value)}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200"
+                            placeholder="z. B. Amnesia Core Cut"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Breeder
+                          </label>
+                          <input
+                            type="text"
+                            value={seed.breeder}
+                            onChange={(event) =>
+                              handleSeedFieldChange(index, "breeder", event.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200"
+                            placeholder="z. B. Ripper Seeds"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Slug
+                          </label>
+                          <input
+                            type="text"
+                            value={seed.slug}
+                            onChange={(event) => handleSeedFieldChange(index, "slug", event.target.value)}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200"
+                            placeholder="amnesia-core-cut"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Popularität (0–10)
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={10}
+                            step={0.1}
+                            value={seed.popularity}
+                            onChange={(event) =>
+                              handleSeedFieldChange(index, "popularity", event.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Typ
+                          </label>
+                          <select
+                            value={seed.type}
+                            onChange={(event) => handleSeedFieldChange(index, "type", event.target.value)}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200"
+                          >
+                            <option value="Feminisiert">Feminisiert</option>
+                            <option value="Regular">Regular</option>
+                            <option value="Autoflower">Autoflower</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Blütezeit
+                          </label>
+                          <input
+                            type="text"
+                            value={seed.floweringTime}
+                            onChange={(event) =>
+                              handleSeedFieldChange(index, "floweringTime", event.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200"
+                            placeholder="z. B. 8–9 Wochen Indoor"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Ertrag
+                          </label>
+                          <input
+                            type="text"
+                            value={seed.yield}
+                            onChange={(event) =>
+                              handleSeedFieldChange(index, "yield", event.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200"
+                            placeholder="z. B. Hoch · 500 g/m²"
+                          />
+                        </div>
+                        <div className="space-y-1 sm:col-span-2">
+                          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Genetik / Beschreibung
+                          </label>
+                          <textarea
+                            value={seed.genetics}
+                            onChange={(event) =>
+                              handleSeedFieldChange(index, "genetics", event.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200"
+                            rows={2}
+                            placeholder="Kurzbeschreibung der Genetik"
+                          />
+                        </div>
+                        <div className="space-y-1 sm:col-span-2">
+                          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Vorschaubilder (ein Link pro Zeile)
+                          </label>
+                          <textarea
+                            value={seed.thumbnails.join("\n")}
+                            onChange={(event) =>
+                              handleSeedFieldChange(index, "thumbnails", event.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200"
+                            rows={3}
+                            placeholder="https://…"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button
+                  onClick={addSeedEntry}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                >
+                  Seed hinzufügen
+                </button>
+                <button
+                  onClick={handleSaveHighlightSettings}
+                  disabled={highlightSettingsSaving}
+                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {highlightSettingsSaving ? "Speichere …" : "Einstellungen speichern"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">Keine Einstellungen verfügbar.</p>
+          )}
+        </section>
       )}
 
       {isOwner && (

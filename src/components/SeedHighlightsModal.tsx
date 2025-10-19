@@ -16,7 +16,7 @@ const SeedHighlightsModal = ({
   onClose,
   seeds,
 }: SeedHighlightsModalProps) => {
-  if (!isOpen) return null;
+  if (!isOpen || seeds.length === 0) return null;
 
   const sortedSeeds = [...seeds].sort((a, b) => b.popularity - a.popularity);
 

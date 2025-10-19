@@ -39,6 +39,7 @@ type Highlights = {
   providers: Provider[];
   reports: Report[];
   seeds: Seed[];
+  seedsEnabled?: boolean;
 };
 
 const EMPTY_RESULTS: Highlights = {
@@ -46,6 +47,7 @@ const EMPTY_RESULTS: Highlights = {
   providers: [],
   reports: [],
   seeds: [],
+  seedsEnabled: true,
 };
 
 const filters: { key: SearchFilter; label: string }[] = [
@@ -180,6 +182,10 @@ const StecklingsIndex = () => {
           providers: Array.isArray(data.providers) ? data.providers : [],
           reports: Array.isArray(data.reports) ? data.reports : [],
           seeds: Array.isArray(data.seeds) ? data.seeds : [],
+          seedsEnabled:
+            typeof data.seedsEnabled === "boolean"
+              ? data.seedsEnabled
+              : Array.isArray(data.seeds) && data.seeds.length > 0,
         });
       } catch (error) {
         console.error("[MARKETING_HIGHLIGHTS]", error);
@@ -225,6 +231,10 @@ const StecklingsIndex = () => {
           providers: Array.isArray(data.providers) ? data.providers : [],
           reports: Array.isArray(data.reports) ? data.reports : [],
           seeds: Array.isArray(data.seeds) ? data.seeds : [],
+          seedsEnabled:
+            typeof data.seedsEnabled === "boolean"
+              ? data.seedsEnabled
+              : Array.isArray(data.seeds) && data.seeds.length > 0,
         });
       })
       .catch((error) => {
@@ -312,10 +322,11 @@ const StecklingsIndex = () => {
     setSelectedIndex(-1);
   }, [debouncedQuery, activeFilter]);
 
-  const topCultivars = useMemo(
-    () => highlights.cultivars.slice(0, 6),
-    [highlights.cultivars],
-  );
+  const topCultivars = useMemo(() => {
+    return [...highlights.cultivars]
+      .sort((a, b) => b.reportCount - a.reportCount)
+      .slice(0, 6);
+  }, [highlights.cultivars]);
   const topProviders = useMemo(
     () => highlights.providers.slice(0, 6),
     [highlights.providers],
@@ -324,15 +335,17 @@ const StecklingsIndex = () => {
     () => highlights.reports.slice(0, 6),
     [highlights.reports],
   );
-  const topSeeds = useMemo(
-    () => [...highlights.seeds].sort((a, b) => b.popularity - a.popularity).slice(0, 6),
-    [highlights.seeds],
-  );
+  const seedsEnabled = highlights.seedsEnabled ?? highlights.seeds.length > 0;
+  const topSeeds = useMemo(() => {
+    if (!seedsEnabled) return [];
+    return [...highlights.seeds].sort((a, b) => b.popularity - a.popularity).slice(0, 6);
+  }, [highlights.seeds, seedsEnabled]);
   const showReportHighlights =
     activeFilter === "all" || activeFilter === "reports";
   const showCultivarHighlights =
     activeFilter === "all" || activeFilter === "cultivars";
-  const showSeedHighlights = showCultivarHighlights;
+  const showSeedHighlights =
+    seedsEnabled && (activeFilter === "all" || activeFilter === "cultivars");
   const showProviderHighlights =
     activeFilter === "all" || activeFilter === "providers";
   const cultivarsLookup = useMemo(() => {
@@ -1063,7 +1076,7 @@ const StecklingsIndex = () => {
         providers={highlights.providers}
       />
       <SeedHighlightsModal
-        isOpen={isSeedsModalOpen}
+        isOpen={isSeedsModalOpen && seedsEnabled && highlights.seeds.length > 0}
         onClose={() => setSeedsModalOpen(false)}
         seeds={highlights.seeds}
       />
