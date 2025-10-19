@@ -61,6 +61,23 @@ const fetchCultivarFromDatabase = async (slug: string) => {
 
   if (!cultivar) return null;
 
+  const reports = cultivar.reports.map((report) => ({
+    id: report.id,
+    title: report.title,
+    excerpt: report.excerpt ?? "",
+    images: Array.isArray(report.images) ? report.images : [],
+    overall: Number(report.overall ?? 0).toFixed(1),
+    date: (report.publishedAt ?? report.createdAt).toISOString(),
+    provider: report.provider?.name ?? "Unbekannt",
+    author: typeof report.authorHandle === "string" ? report.authorHandle : null,
+    likes: Number(report.likes ?? 0),
+    comments: Number(report.comments ?? 0),
+  }));
+
+  const previewImages = reports
+    .flatMap((report) => report.images)
+    .filter((image): image is string => typeof image === "string" && image.length > 0);
+
   return {
     id: cultivar.id,
     name: cultivar.name,
@@ -75,18 +92,8 @@ const fetchCultivarFromDatabase = async (slug: string) => {
       ? cultivar.thumbnails.filter((value): value is string => typeof value === "string")
       : [],
     breeder: cultivar.breeder ?? null,
-    reports: cultivar.reports.map((report) => ({
-      id: report.id,
-      title: report.title,
-      excerpt: report.excerpt ?? "",
-      images: Array.isArray(report.images) ? report.images : [],
-      overall: Number(report.overall ?? 0).toFixed(1),
-      date: (report.publishedAt ?? report.createdAt).toISOString(),
-      provider: report.provider?.name ?? "Unbekannt",
-      author: typeof report.authorHandle === "string" ? report.authorHandle : null,
-      likes: Number(report.likes ?? 0),
-      comments: Number(report.comments ?? 0),
-    })),
+    reports,
+    previewImages,
   };
 };
 
@@ -110,9 +117,14 @@ const fetchCultivarFallback = (slug: string) => {
       comments: Number(report.comments ?? 0),
     }));
 
+  const previewImages = reports
+    .flatMap((report) => report.images)
+    .filter((image): image is string => typeof image === "string" && image.length > 0);
+
   return {
     ...cultivar,
     reports,
+    previewImages,
   };
 };
 
@@ -126,6 +138,12 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
   }
 
   const relatedReports = cultivar.reports ?? [];
+
+  const previewImages = (Array.isArray(cultivar.previewImages) && cultivar.previewImages.length > 0
+    ? cultivar.previewImages
+    : Array.isArray(cultivar.thumbnails)
+      ? cultivar.thumbnails
+      : []) as string[];
 
   const providerNames = Array.from(new Set(relatedReports.map((report) => report.provider))).filter(
     Boolean,
@@ -214,15 +232,21 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
             <div className="flex flex-none flex-col gap-2 lg:w-72 lg:pl-10 lg:justify-center">
               <div className="mb-1 hidden lg:block text-sm font-medium text-gray-400 pl-1">Bilder</div>
               <div className="grid grid-cols-3 gap-2 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-                {cultivar.thumbnails.slice(0, 6).map((thumb, index) => (
-                  <ThumbnailCell
-                    key={index}
-                    value={thumb}
-                    alt={`${cultivar.name} Thumbnail ${index + 1}`}
-                    className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-green-50 text-xl"
-                    imgClassName="h-full w-full object-cover"
-                  />
-                ))}
+                {previewImages.length > 0 ? (
+                  previewImages.slice(0, 6).map((thumb, index) => (
+                    <ThumbnailCell
+                      key={index}
+                      value={thumb}
+                      alt={`${cultivar.name} Bild ${index + 1}`}
+                      className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-green-50 text-xl"
+                      imgClassName="h-full w-full object-cover"
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-3 flex min-h-[120px] items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
+                    Noch keine Bilder aus Community-Berichten vorhanden.
+                  </div>
+                )}
               </div>
 
               {providerNames.length > 0 && (

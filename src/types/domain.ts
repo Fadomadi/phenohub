@@ -10,6 +10,7 @@ export type Cultivar = {
   trending: boolean;
   thumbnails: string[];
   recentImages?: string[];
+  previewImages?: string[];
   breeder?: string | null;
   offerings?: Array<{
     providerName: string;
