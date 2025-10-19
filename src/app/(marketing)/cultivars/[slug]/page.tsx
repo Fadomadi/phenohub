@@ -1,12 +1,8 @@
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import ThumbnailCell from "@/components/ThumbnailCell";
+import CultivarGallery from "@/components/CultivarGallery";
 import { mockCultivars, mockReports } from "@/data/mockData";
-
-const GalleryPreview = dynamic(() => import("@/components/GalleryPreview"), {
-  ssr: false,
-});
 
 type CultivarPageProps = {
   params: Promise<{ slug: string }>;
@@ -237,7 +233,7 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
             <div className="flex flex-none flex-col gap-2 lg:w-72 lg:pl-10 lg:justify-center">
               <div className="mb-1 hidden lg:block text-sm font-medium text-gray-400 pl-1">Bilder</div>
               <div className="grid grid-cols-3 gap-2 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-                <GalleryPreview images={previewImages} name={cultivar.name} />
+                <CultivarGallery images={previewImages} name={cultivar.name} />
               </div>
 
               {providerNames.length > 0 && (
