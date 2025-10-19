@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import {
   Fragment,
@@ -7,7 +8,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import ThumbnailCell from "@/components/ThumbnailCell";
 
@@ -145,15 +145,13 @@ const CultivarGallery = ({ images, name, className }: CultivarGalleryProps) => {
           )}
 
           <div className="flex w-full max-w-4xl flex-col gap-4">
-            <div className="relative max-h-[75vh] overflow-hidden rounded-3xl border border-white/20 bg-black/40">
-              <Image
+            <div className="flex max-h-[80vh] items-center justify-center overflow-hidden rounded-3xl border border-white/20 bg-black/40 p-4">
+              <img
                 key={`${sanitizedImages[activeIndex]}-${activeIndex}`}
                 src={sanitizedImages[activeIndex]}
                 alt={`${name} Bild ${activeIndex + 1}`}
-                fill
-                sizes="90vw"
-                className="object-contain"
-                priority
+                className="max-h-[75vh] w-auto max-w-full object-contain"
+                loading="eager"
               />
             </div>
 
@@ -171,12 +169,11 @@ const CultivarGallery = ({ images, name, className }: CultivarGalleryProps) => {
                     }`}
                     aria-label={`${name} Bild ${index + 1} anzeigen`}
                   >
-                    <Image
+                    <img
                       src={thumb}
                       alt={`${name} Bild ${index + 1}`}
-                      fill
-                      sizes="120px"
-                      className="object-cover"
+                      className="h-full w-full object-cover"
+                      loading="lazy"
                     />
                   </button>
                 ))}
