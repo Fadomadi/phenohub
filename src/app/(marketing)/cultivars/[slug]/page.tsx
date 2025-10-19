@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ThumbnailCell from "@/components/ThumbnailCell";
-import CultivarGallery from "@/components/CultivarGallery";
+import ReportImageStack, { type ReportImageStackItem } from "@/components/ReportImageStack";
 import { mockCultivars, mockReports } from "@/data/mockData";
 
 type CultivarPageProps = {
@@ -140,11 +140,24 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
 
   const relatedReports = cultivar.reports ?? [];
 
-  const previewImages = (Array.isArray(cultivar.previewImages) && cultivar.previewImages.length > 0
+  const previewImages = Array.isArray(cultivar.previewImages) && cultivar.previewImages.length > 0
     ? cultivar.previewImages
     : Array.isArray(cultivar.thumbnails)
       ? cultivar.thumbnails
-      : []) as string[];
+      : [];
+
+  const previewStackItems: ReportImageStackItem[] = previewImages.slice(0, 6).map((image, index) => {
+    const sources = [image];
+    if (typeof image === "string" && image.startsWith("http")) {
+      sources.unshift(`/api/image-proxy?url=${encodeURIComponent(image)}`);
+    }
+    return {
+      id: `${cultivar.slug}-preview-${index}`,
+      alt: `${cultivar.name} – Bild ${index + 1}`,
+      loading: index === 0 ? "eager" : "lazy",
+      sources,
+    };
+  });
 
   const providerNames = Array.from(new Set(relatedReports.map((report) => report.provider))).filter(
     Boolean,
@@ -232,11 +245,18 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
             {/* Rechte Spalte: Bilder */}
             <div className="flex flex-none flex-col gap-2 lg:w-72 lg:pl-10 lg:justify-center">
               <div className="mb-1 hidden lg:block text-sm font-medium text-gray-400 pl-1">Bilder</div>
-              <CultivarGallery
-                images={previewImages}
-                name={cultivar.name}
-                className="rounded-3xl border border-gray-100 bg-white p-3 shadow-sm"
-              />
+              {previewStackItems.length > 0 ? (
+                <div className="rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
+                  <ReportImageStack
+                    items={previewStackItems}
+                    className="grid grid-cols-3 gap-2"
+                  />
+                </div>
+              ) : (
+                <div className="col-span-3 flex min-h-[120px] items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
+                  Noch keine Bilder aus Community-Berichten vorhanden.
+                </div>
+              )}
 
               {providerNames.length > 0 && (
                 <div className="rounded-3xl border border-green-100 bg-green-50/60 p-4">

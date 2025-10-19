@@ -4,7 +4,7 @@ import Link from "next/link";
 import { X, TrendingUp } from "lucide-react";
 import type { Cultivar, Report } from "@/types/domain";
 import ThumbnailCell from "@/components/ThumbnailCell";
-import CultivarGallery from "@/components/CultivarGallery";
+import ReportImageStack, { type ReportImageStackItem } from "@/components/ReportImageStack";
 
 type CultivarPreviewModalProps = {
   cultivar: Cultivar;
@@ -22,6 +22,19 @@ const CultivarPreviewModal = ({
       ? cultivar.recentImages
       : cultivar.thumbnails
     ).slice(0, 12);
+
+  const previewItems: ReportImageStackItem[] = previewImages.map((image, index) => {
+    const sources = [image];
+    if (typeof image === "string" && image.startsWith("http")) {
+      sources.unshift(`/api/image-proxy?url=${encodeURIComponent(image)}`);
+    }
+    return {
+      id: `${cultivar.slug}-modal-${index}`,
+      alt: `${cultivar.name} – Bild ${index + 1}`,
+      loading: index === 0 ? "eager" : "lazy",
+      sources,
+    };
+  });
 
   return (
     <div className="fixed inset-0 z-[65] flex items-center justify-center bg-black/50 px-4 py-10 backdrop-blur-sm">
@@ -102,9 +115,15 @@ const CultivarPreviewModal = ({
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-3xl border border-gray-100 bg-white p-3">
-              <CultivarGallery images={previewImages} name={cultivar.name} />
-            </div>
+            {previewItems.length > 0 ? (
+              <div className="rounded-3xl border border-gray-100 bg-white p-3">
+                <ReportImageStack items={previewItems} className="grid grid-cols-3 gap-2" />
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+                Noch keine Bilder vorhanden.
+              </div>
+            )}
 
             <div className="rounded-3xl border border-gray-100 bg-gray-50 p-4">
               <p className="text-xs uppercase tracking-wide text-gray-500">
