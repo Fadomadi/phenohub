@@ -803,57 +803,63 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         <div className="space-y-8">
           <section className="relative overflow-hidden rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-white to-green-50/70 p-6 shadow-lg shadow-green-100/40 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-900 md:p-8">
             <div className="space-y-10">
-              <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-                <header className="flex-1 space-y-4">
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-green-600/15 px-3 py-1 text-green-700 dark:bg-sky-500/15 dark:text-sky-200">
-                      Community Report
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
-                      Veröffentlicht am {publishedLabel}
-                    </span>
-                  </div>
+              <header className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-600/15 px-3 py-1 text-green-700 dark:bg-sky-500/15 dark:text-sky-200">
+                    Community Report
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+                    Veröffentlicht am {publishedLabel}
+                  </span>
+                </div>
 
-                  <div className="space-y-4">
-                    <h1 className="text-3xl font-semibold leading-tight text-gray-900 dark:text-slate-100 md:text-4xl">
-                      {report.title}
-                    </h1>
-                    {excerptText.length === 0 && (
-                      <p className="text-base leading-relaxed text-gray-600 dark:text-slate-300">
-                        Zusammenfassung wird ergänzt.
-                      </p>
+                <div className="space-y-4">
+                  <h1 className="text-3xl font-semibold leading-tight text-gray-900 dark:text-slate-100 md:text-4xl">
+                    {report.title}
+                  </h1>
+                  {excerptText.length > 0 && (
+                    <p className="text-base leading-relaxed text-gray-600 dark:text-slate-300">
+                      {excerptText}
+                    </p>
+                  )}
+                </div>
+              </header>
+
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-8">
+                <section className="flex-1 rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-md dark:border-slate-800 dark:bg-slate-900/70">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                    Grow-Notizen
+                  </h2>
+                  {paragraphs.length > 0 ? (
+                    <div className="mt-3 space-y-3 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
+                      {paragraphs.map((paragraph: string, index: number) => (
+                        <p key={index}>{paragraph}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                      Noch keine Details ergänzt.
+                    </p>
+                  )}
+                </section>
+
+                <aside className="flex w-full flex-col gap-4 rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-md dark:border-slate-800 dark:bg-slate-900/70 lg:w-[40%]">
+                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                    <span>Galerie</span>
+                    {reportImageStackItems.length > 1 && (
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500">
+                        {reportImageStackItems.length} Bilder
+                      </span>
                     )}
-
-                    {paragraphs.length > 0 ? (
-                      <section className="space-y-2">
-                        <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
-                          Grow-Notizen
-                        </h2>
-                        <div className="space-y-3 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
-                          {paragraphs.map((paragraph: string, index: number) => (
-                            <p key={index}>{paragraph}</p>
-                          ))}
-                        </div>
-                      </section>
-                    ) : (
-                      <section className="space-y-2">
-                        <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
-                          Grow-Notizen
-                        </h2>
-                        <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
-                          Noch keine Details ergänzt.
-                        </p>
-                      </section>
-                    )}
                   </div>
-                </header>
-
-                {reportImageStackItems.length > 0 && (
-                  <ReportImageStack
-                    items={reportImageStackItems}
-                    className="md:ml-6 md:w-64 md:drop-shadow-xl"
-                  />
-                )}
+                  {reportImageStackItems.length > 0 ? (
+                    <ReportImageStack items={reportImageStackItems} className="w-full" />
+                  ) : (
+                    <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                      Keine Bilder hochgeladen.
+                    </p>
+                  )}
+                </aside>
               </div>
 
               <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr),minmax(0,1fr)]">
