@@ -52,6 +52,8 @@ const fetchCultivarFromDatabase = async (slug: string) => {
           createdAt: true,
           provider: { select: { name: true } },
           authorHandle: true,
+          likes: true,
+          comments: true,
         },
       },
     },
@@ -82,6 +84,8 @@ const fetchCultivarFromDatabase = async (slug: string) => {
       date: (report.publishedAt ?? report.createdAt).toISOString(),
       provider: report.provider?.name ?? "Unbekannt",
       author: typeof report.authorHandle === "string" ? report.authorHandle : null,
+      likes: Number(report.likes ?? 0),
+      comments: Number(report.comments ?? 0),
     })),
   };
 };
@@ -102,6 +106,8 @@ const fetchCultivarFallback = (slug: string) => {
       date: new Date(report.date ?? Date.now()).toISOString(),
       provider: report.provider,
       author: report.author ?? null,
+      likes: Number(report.likes ?? 0),
+      comments: Number(report.comments ?? 0),
     }));
 
   return {
