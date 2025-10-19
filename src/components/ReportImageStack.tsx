@@ -37,7 +37,7 @@ const ReportImageEntry = ({ item }: { item: ReportImageStackItem }) => {
   }
 
   return (
-    <figure className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100/80 shadow-md ring-1 ring-white/60 transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-green-200 dark:bg-slate-950/60 dark:ring-slate-800">
+    <figure className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-100/80 shadow-sm ring-1 ring-white/40 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-green-200 dark:bg-slate-950/60 dark:ring-slate-800">
       <div className="group block h-full w-full cursor-zoom-in">
         <div className="relative h-full w-full">
           <img
@@ -54,10 +54,18 @@ const ReportImageEntry = ({ item }: { item: ReportImageStackItem }) => {
 };
 
 const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
-  const normalizedItems = Array.isArray(items) ? items : [];
+  const normalizedItems = useMemo(
+    () => (Array.isArray(items) ? items : []),
+    [items],
+  );
   const hasItems = normalizedItems.length > 0;
 
-  const containerClassName = ["space-y-4", className].filter(Boolean).join(" ");
+  const previewItems = useMemo(
+    () => normalizedItems.map((item, index) => ({ item, index })).slice(0, 4),
+    [normalizedItems],
+  );
+
+  const containerClassName = ["grid grid-cols-2 gap-3", className].filter(Boolean).join(" ");
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [activeSourceIndex, setActiveSourceIndex] = useState(0);
@@ -135,7 +143,7 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
   return (
     <>
       <div className={containerClassName}>
-        {normalizedItems.map((item, index) => (
+        {previewItems.map(({ item, index }) => (
           <button
             key={item.id}
             type="button"
