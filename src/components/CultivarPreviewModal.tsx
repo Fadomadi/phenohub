@@ -133,7 +133,7 @@ const CultivarPreviewModal = ({
           <div className="space-y-4">
             {previewItems.length > 0 ? (
               <div className="rounded-3xl border border-gray-100 bg-white p-3">
-                <ReportImageStack items={previewItems} />
+                <ReportImageStack items={previewItems} className="md:ml-6 md:w-64 md:drop-shadow-xl" />
               </div>
             ) : (
               <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">

@@ -76,10 +76,6 @@ const fetchCultivarFromDatabase = async (slug: string) => {
     comments: Number(report.comments ?? 0),
   }));
 
-  const previewImages = reports
-    .flatMap((report) => report.images)
-    .filter((image): image is string => typeof image === "string" && image.length > 0);
-
   return {
     id: cultivar.id,
     name: cultivar.name,
@@ -271,10 +267,7 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
               <div className="mb-1 hidden lg:block text-sm font-medium text-gray-400 pl-1">Bilder</div>
               <div className="rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
                 {previewStackItems.length > 0 ? (
-                  <ReportImageStack
-                    items={previewStackItems}
-                    className="md:ml-0 md:w-full md:max-w-xs lg:max-w-sm"
-                  />
+                  <ReportImageStack items={previewStackItems} className="md:ml-6 md:w-64 md:drop-shadow-xl" />
                 ) : (
                   <div className="flex min-h-[140px] items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
                     Noch keine Bilder aus Community-Berichten vorhanden.
