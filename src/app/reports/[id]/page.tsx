@@ -802,9 +802,12 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
       <div className="grid gap-10 xl:grid-cols-[minmax(0,1.6fr),minmax(0,0.9fr)]">
         <div className="space-y-8">
           <section className="relative overflow-hidden rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-white to-green-50/70 p-6 shadow-lg shadow-green-100/40 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-900 md:p-8">
+            <span className="hidden md:inline-flex md:absolute md:right-8 md:top-8 md:items-center md:gap-1 md:rounded-full md:bg-gray-100 md:px-3 md:py-1 md:text-[11px] md:font-semibold md:uppercase md:tracking-wide md:text-gray-600 dark:md:bg-slate-800 dark:md:text-slate-300">
+              Veröffentlicht am {publishedLabel}
+            </span>
             <div className="space-y-10">
               <header className="space-y-4">
-                <div className="flex w-full items-center justify-end text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                <div className="flex w-full items-center justify-end text-[11px] font-semibold uppercase tracking-wide text-gray-500 md:hidden">
                   <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                     Veröffentlicht am {publishedLabel}
                   </span>
