@@ -1,27 +1,125 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ThumbnailCell from "@/components/ThumbnailCell";
-import { mockCultivars } from "@/data/mockData";
-import { mockReports } from "@/data/mockData";
+import { mockCultivars, mockReports } from "@/data/mockData";
 
 type CultivarPageProps = {
   params: Promise<{ slug: string }>;
 };
 
+const importPrisma = async () => {
+  try {
+    const prismaModule = await import("@/lib/prisma");
+    return prismaModule.default;
+  } catch (error) {
+    console.warn("[CULTIVAR_DETAIL] Prisma unavailable – falling back to mock", error);
+    return null;
+  }
+};
+
+const fetchCultivarFromDatabase = async (slug: string) => {
+  const prisma = await importPrisma();
+  if (!prisma) return null;
+
+  const cultivar = await prisma.cultivar.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      aka: true,
+      cloneOnly: true,
+      reportCount: true,
+      avgRating: true,
+      imageCount: true,
+      trending: true,
+      thumbnails: true,
+      breeder: true,
+      reports: {
+        where: { status: "PUBLISHED" },
+        orderBy: [
+          { publishedAt: "desc" },
+          { createdAt: "desc" },
+        ],
+        take: 12,
+        select: {
+          id: true,
+          title: true,
+          excerpt: true,
+          images: true,
+          overall: true,
+          publishedAt: true,
+          createdAt: true,
+          provider: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  if (!cultivar) return null;
+
+  return {
+    id: cultivar.id,
+    name: cultivar.name,
+    slug: cultivar.slug,
+    aka: cultivar.aka ?? [],
+    cloneOnly: Boolean(cultivar.cloneOnly),
+    reportCount: Number(cultivar.reportCount ?? 0),
+    avgRating: Number(cultivar.avgRating ?? 0),
+    imageCount: Number(cultivar.imageCount ?? 0),
+    trending: Boolean(cultivar.trending),
+    thumbnails: Array.isArray(cultivar.thumbnails)
+      ? cultivar.thumbnails.filter((value): value is string => typeof value === "string")
+      : [],
+    breeder: cultivar.breeder ?? null,
+    reports: cultivar.reports.map((report) => ({
+      id: report.id,
+      title: report.title,
+      excerpt: report.excerpt ?? "",
+      images: Array.isArray(report.images) ? report.images : [],
+      overall: Number(report.overall ?? 0).toFixed(1),
+      date: (report.publishedAt ?? report.createdAt).toISOString(),
+      provider: report.provider?.name ?? "Unbekannt",
+    })),
+  };
+};
+
+const fetchCultivarFallback = (slug: string) => {
+  const cultivar = mockCultivars.find((item) => item.slug === slug);
+  if (!cultivar) return null;
+
+  const reports = mockReports
+    .filter((report) => report.cultivarSlug === slug)
+    .slice(0, 12)
+    .map((report) => ({
+      id: report.id,
+      title: report.title,
+      excerpt: report.excerpt ?? "",
+      images: report.images ?? [],
+      overall: Number(report.overall ?? 0).toFixed(1),
+      date: new Date(report.date ?? Date.now()).toISOString(),
+      provider: report.provider,
+    }));
+
+  return {
+    ...cultivar,
+    reports,
+  };
+};
+
 const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
   const { slug } = await params;
-  const cultivar = mockCultivars.find((item) => item.slug === slug);
+
+  const cultivar = (await fetchCultivarFromDatabase(slug)) ?? fetchCultivarFallback(slug);
 
   if (!cultivar) {
     notFound();
   }
 
-  const relatedReports = mockReports
-    .filter((report) => report.cultivarSlug === slug)
-    .slice(0, 10);
+  const relatedReports = cultivar.reports ?? [];
 
-  const providerNames = Array.from(
-    new Set(relatedReports.map((report) => report.provider)),
+  const providerNames = Array.from(new Set(relatedReports.map((report) => report.provider))).filter(
+    Boolean,
   );
 
   return (
