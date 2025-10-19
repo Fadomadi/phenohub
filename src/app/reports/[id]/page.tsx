@@ -805,12 +805,14 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
             <div className="space-y-10">
               <header className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-600/15 px-3 py-1 text-green-700 dark:bg-sky-500/15 dark:text-sky-200">
-                    Community Report
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
-                    Veröffentlicht am {publishedLabel}
-                  </span>
+                  <div className="flex w-full items-center justify-between gap-3 border-b border-gray-100 pb-3 dark:border-slate-800 md:flex-row md:border-b-0 md:pb-0">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-600/15 px-3 py-1 text-green-700 dark:bg-sky-500/15 dark:text-sky-200">
+                      Community Report
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300 md:ml-auto">
+                      Veröffentlicht am {publishedLabel}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
