@@ -76,6 +76,10 @@ const fetchCultivarFromDatabase = async (slug: string) => {
     comments: Number(report.comments ?? 0),
   }));
 
+  const previewImages = reports
+    .flatMap((report) => report.images)
+    .filter((image): image is string => typeof image === "string" && image.length > 0);
+
   return {
     id: cultivar.id,
     name: cultivar.name,
