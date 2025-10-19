@@ -651,6 +651,12 @@ const ReportSubmissionPanel = ({
                 </label>
               </div>
             </label>
+            {formState.anonymous && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                Hinweis: Anonyme Beiträge lassen sich später nicht mehr bearbeiten oder löschen, weil
+                sie keinem Konto zugeordnet sind.
+              </div>
+            )}
             <label className="flex flex-col gap-1.5">
               <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <Sun className="h-4 w-4 text-green-600" />
