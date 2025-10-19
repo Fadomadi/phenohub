@@ -269,15 +269,16 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
             {/* Rechte Spalte: Bilder */}
             <div className="flex flex-none flex-col gap-2 lg:w-72 lg:pl-10 lg:justify-center">
               <div className="mb-1 hidden lg:block text-sm font-medium text-gray-400 pl-1">Bilder</div>
-              <div className="rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-                {previewStackItems.length > 0 ? (
-                  <ReportImageStack items={previewStackItems} className="md:ml-6 md:w-64 md:drop-shadow-xl" />
-                ) : (
-                  <div className="flex min-h-[140px] items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
-                    Noch keine Bilder aus Community-Berichten vorhanden.
-                  </div>
-                )}
-              </div>
+              {previewStackItems.length > 0 ? (
+                <ReportImageStack
+                  items={previewStackItems}
+                  className="md:ml-6 md:w-64 md:drop-shadow-xl"
+                />
+              ) : (
+                <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                  Noch keine Bilder aus Community-Berichten vorhanden.
+                </p>
+              )}
 
               {providerNames.length > 0 && (
                 <div className="rounded-3xl border border-green-100 bg-green-50/60 p-4">
