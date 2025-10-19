@@ -281,6 +281,9 @@ export async function GET() {
         { reportCount: "desc" },
       ],
       take: TAKE,
+      where: {
+        reportCount: { gt: 0 },
+      },
       include: {
         offerings: {
           include: {
@@ -326,7 +329,10 @@ export async function GET() {
       ? cultivarsResult.value.map(mapCultivar)
       : (() => {
           console.error("[HIGHLIGHTS_API] cultivars query failed – using mock data", cultivarsResult.reason);
-          return mockCultivars.slice(0, TAKE).map(mapMockCultivar);
+          return mockCultivars
+            .filter((cultivar) => cultivar.reportCount > 0)
+            .slice(0, TAKE)
+            .map(mapMockCultivar);
         })();
 
   const providers =

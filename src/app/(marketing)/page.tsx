@@ -323,9 +323,9 @@ const StecklingsIndex = () => {
   }, [debouncedQuery, activeFilter]);
 
   const topCultivars = useMemo(() => {
-    return [...highlights.cultivars]
-      .sort((a, b) => b.reportCount - a.reportCount)
-      .slice(0, 6);
+    const withReports = highlights.cultivars.filter((cultivar) => cultivar.reportCount > 0);
+    const base = withReports.length > 0 ? withReports : highlights.cultivars;
+    return [...base].sort((a, b) => b.reportCount - a.reportCount).slice(0, 6);
   }, [highlights.cultivars]);
   const topProviders = useMemo(
     () => highlights.providers.slice(0, 6),
