@@ -131,16 +131,18 @@ const CultivarPreviewModal = ({
           </div>
 
           <div className="space-y-4">
-            {previewItems.length > 0 ? (
-              <ReportImageStack
-                items={previewItems}
-                className="md:ml-6 md:w-64 md:drop-shadow-xl"
-              />
-            ) : (
-              <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500">
-                Noch keine Bilder vorhanden.
-              </p>
-            )}
+            <div className="rounded-3xl border border-gray-100 bg-white p-3">
+              {previewItems.length > 0 ? (
+                <ReportImageStack
+                  items={previewItems}
+                  className="md:ml-6 md:w-64 md:drop-shadow-xl"
+                />
+              ) : (
+                <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500">
+                  Noch keine Bilder vorhanden.
+                </p>
+              )}
+            </div>
 
             <div className="rounded-3xl border border-gray-100 bg-gray-50 p-4">
               <p className="text-xs uppercase tracking-wide text-gray-500">
