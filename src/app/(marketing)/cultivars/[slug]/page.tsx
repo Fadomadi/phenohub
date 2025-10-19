@@ -1,7 +1,12 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import ThumbnailCell from "@/components/ThumbnailCell";
 import { mockCultivars, mockReports } from "@/data/mockData";
+
+const GalleryPreview = dynamic(() => import("@/components/GalleryPreview"), {
+  ssr: false,
+});
 
 type CultivarPageProps = {
   params: Promise<{ slug: string }>;
@@ -232,21 +237,7 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
             <div className="flex flex-none flex-col gap-2 lg:w-72 lg:pl-10 lg:justify-center">
               <div className="mb-1 hidden lg:block text-sm font-medium text-gray-400 pl-1">Bilder</div>
               <div className="grid grid-cols-3 gap-2 rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-                {previewImages.length > 0 ? (
-                  previewImages.slice(0, 6).map((thumb, index) => (
-                    <ThumbnailCell
-                      key={index}
-                      value={thumb}
-                      alt={`${cultivar.name} Bild ${index + 1}`}
-                      className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-green-50 text-xl"
-                      imgClassName="h-full w-full object-cover"
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-3 flex min-h-[120px] items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
-                    Noch keine Bilder aus Community-Berichten vorhanden.
-                  </div>
-                )}
+                <GalleryPreview images={previewImages} name={cultivar.name} />
               </div>
 
               {providerNames.length > 0 && (
