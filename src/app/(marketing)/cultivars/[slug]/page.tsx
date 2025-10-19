@@ -80,6 +80,7 @@ const fetchCultivarFromDatabase = async (slug: string) => {
       overall: Number(report.overall ?? 0).toFixed(1),
       date: (report.publishedAt ?? report.createdAt).toISOString(),
       provider: report.provider?.name ?? "Unbekannt",
+      author: report.authorHandle ?? null,
     })),
   };
 };
@@ -99,6 +100,7 @@ const fetchCultivarFallback = (slug: string) => {
       overall: Number(report.overall ?? 0).toFixed(1),
       date: new Date(report.date ?? Date.now()).toISOString(),
       provider: report.provider,
+      author: report.author ?? null,
     }));
 
   return {
