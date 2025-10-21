@@ -43,6 +43,7 @@ type CultivarInput = {
   name: string;
   aka: string[];
   cloneOnly: boolean | null;
+  cutInfo?: string | null;
   reportCount: number;
   avgRating?: unknown;
   imageCount: number;
@@ -107,6 +108,7 @@ const mapCultivar = (cultivar: CultivarInput) => {
     name: cultivar.name,
     aka: cultivar.aka,
     cloneOnly: cultivar.cloneOnly,
+    cutInfo: cultivar.cutInfo ?? null,
     reportCount: cultivar.reportCount,
     avgRating: Number(cultivar.avgRating),
     imageCount: cultivar.imageCount,
@@ -388,10 +390,16 @@ export async function GET() {
 
   let seedsEnabled = true;
   let seeds = mockSeeds.slice(0, TAKE).map(mapSeed);
+  let supportCtaEnabled = true;
+  let plannedNotes = "";
 
   try {
     const seedConfig = await getHighlightSeedConfig(prisma);
     seedsEnabled = Boolean(seedConfig.showSeeds);
+    supportCtaEnabled =
+      typeof seedConfig.showSupportCTA === "boolean" ? seedConfig.showSupportCTA : true;
+    plannedNotes =
+      typeof seedConfig.plannedNotes === "string" ? seedConfig.plannedNotes : "";
     if (seedsEnabled) {
       seeds =
         seedConfig.seeds.length > 0
@@ -415,5 +423,7 @@ export async function GET() {
     reports: reportsPayload,
     seeds,
     seedsEnabled,
+    supportCtaEnabled,
+    plannedNotes,
   });
 }

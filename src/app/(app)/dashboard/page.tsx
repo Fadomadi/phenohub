@@ -47,7 +47,17 @@ const STATUS_OPTIONS = ["ACTIVE", "INVITED", "SUSPENDED"];
 
 type HighlightSeedConfig = {
   showSeeds: boolean;
+  showSupportCTA: boolean;
+  plannedNotes: string;
   seeds: Seed[];
+};
+
+type HighlightFeedbackAdminEntry = {
+  id: number;
+  body: string;
+  createdAt: string;
+  displayName: string;
+  archivedAt: string | null;
 };
 
 const createSeedTemplate = (id: number): Seed => ({
@@ -82,6 +92,15 @@ const DashboardPage = () => {
   );
   const [highlightSettingsSuccess, setHighlightSettingsSuccess] = useState<string | null>(null);
   const [highlightSettingsSaving, setHighlightSettingsSaving] = useState(false);
+  const [highlightFeedbackEntries, setHighlightFeedbackEntries] = useState<
+    HighlightFeedbackAdminEntry[]
+  >([]);
+  const [highlightFeedbackLoading, setHighlightFeedbackLoading] = useState(false);
+  const [highlightFeedbackError, setHighlightFeedbackError] = useState<string | null>(null);
+  const [highlightFeedbackActionIds, setHighlightFeedbackActionIds] = useState<Set<number>>(
+    () => new Set<number>(),
+  );
+  const [highlightFeedbackSuccess, setHighlightFeedbackSuccess] = useState<string | null>(null);
 
   const isModerator = useMemo(
     () =>
@@ -177,10 +196,19 @@ const DashboardPage = () => {
       if (config) {
         setHighlightSettings({
           showSeeds: Boolean(config.showSeeds),
+          showSupportCTA:
+            typeof config.showSupportCTA === "boolean" ? config.showSupportCTA : true,
+          plannedNotes:
+            typeof config.plannedNotes === "string" ? config.plannedNotes : "",
           seeds: Array.isArray(config.seeds) ? config.seeds : [],
         });
       } else {
-        setHighlightSettings({ showSeeds: true, seeds: [] });
+        setHighlightSettings({
+          showSeeds: true,
+          showSupportCTA: true,
+          plannedNotes: "",
+          seeds: [],
+        });
       }
     } catch (error) {
       setHighlightSettingsError(
@@ -188,7 +216,12 @@ const DashboardPage = () => {
           ? error.message
           : "Highlight-Einstellungen konnten nicht geladen werden.",
       );
-      setHighlightSettings({ showSeeds: true, seeds: [] });
+      setHighlightSettings({
+        showSeeds: true,
+        showSupportCTA: true,
+        plannedNotes: "",
+        seeds: [],
+      });
     } finally {
       setHighlightSettingsLoading(false);
     }
@@ -199,6 +232,96 @@ const DashboardPage = () => {
       void loadHighlightSettings();
     }
   }, [isOwner, loadHighlightSettings]);
+
+  const normalizeHighlightFeedbackEntry = useCallback(
+    (value: unknown): HighlightFeedbackAdminEntry | null => {
+      if (!value || typeof value !== "object") return null;
+      const record = value as Record<string, unknown>;
+      const idRaw = record.id;
+      const id =
+        typeof idRaw === "number"
+          ? idRaw
+          : typeof idRaw === "string" && Number.isFinite(Number(idRaw))
+            ? Number(idRaw)
+            : null;
+      if (!id) return null;
+
+      const body =
+        typeof record.body === "string"
+          ? record.body.trim()
+          : typeof record.body === "number"
+            ? String(record.body)
+            : "";
+      if (!body) return null;
+
+      const displayName =
+        typeof record.displayName === "string" && record.displayName.trim().length > 0
+          ? record.displayName.trim()
+          : typeof record.authorName === "string" && record.authorName.trim().length > 0
+            ? record.authorName.trim()
+            : "Community-Mitglied";
+
+      const createdAtValue = record.createdAt;
+      const createdAt =
+        createdAtValue instanceof Date
+          ? createdAtValue.toISOString()
+          : typeof createdAtValue === "string" && createdAtValue.length > 0
+            ? createdAtValue
+            : new Date().toISOString();
+
+      const archivedRaw = record.archivedAt;
+      let archivedAt: string | null = null;
+      if (archivedRaw instanceof Date) {
+        archivedAt = archivedRaw.toISOString();
+      } else if (typeof archivedRaw === "string" && archivedRaw.length > 0) {
+        archivedAt = archivedRaw;
+      }
+
+      return {
+        id,
+        body,
+        displayName,
+        createdAt,
+        archivedAt,
+      };
+    },
+    [],
+  );
+
+  const loadHighlightFeedbackEntries = useCallback(async () => {
+    if (!isOwner) return;
+    setHighlightFeedbackLoading(true);
+    setHighlightFeedbackError(null);
+    setHighlightFeedbackSuccess(null);
+    try {
+      const response = await fetch("/api/admin/highlight-feedback?includeArchived=true", {
+        cache: "no-store",
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.error || "Feedback-Einträge konnten nicht geladen werden.");
+      }
+      const entries = Array.isArray(result?.feedback)
+        ? (result.feedback
+            .map((item) => normalizeHighlightFeedbackEntry(item))
+            .filter((item): item is HighlightFeedbackAdminEntry => Boolean(item)) as HighlightFeedbackAdminEntry[])
+        : [];
+      setHighlightFeedbackEntries(entries);
+    } catch (error) {
+      setHighlightFeedbackError(
+        error instanceof Error ? error.message : "Feedback-Einträge konnten nicht geladen werden.",
+      );
+      setHighlightFeedbackEntries([]);
+    } finally {
+      setHighlightFeedbackLoading(false);
+    }
+  }, [isOwner, normalizeHighlightFeedbackEntry]);
+
+  useEffect(() => {
+    if (isOwner) {
+      void loadHighlightFeedbackEntries();
+    }
+  }, [isOwner, loadHighlightFeedbackEntries]);
 
   const mutateReport = useCallback(
     async (id: number, nextStatus: "PENDING" | "PUBLISHED" | "REJECTED", note?: string | null) => {
@@ -328,6 +451,106 @@ const DashboardPage = () => {
     });
   }, []);
 
+  const handleSupportCtaToggle = useCallback((next: boolean) => {
+    setHighlightSettings((previous) => {
+      if (!previous) return previous;
+      return { ...previous, showSupportCTA: next };
+    });
+  }, []);
+
+  const handlePlannedNotesChange = useCallback((value: string) => {
+    setHighlightSettings((previous) => {
+      if (!previous) return previous;
+      return { ...previous, plannedNotes: value };
+    });
+  }, []);
+
+  const handleHighlightFeedbackArchive = useCallback(
+    async (id: number, archived: boolean) => {
+      setHighlightFeedbackActionIds((previous) => {
+        const next = new Set(previous);
+        next.add(id);
+        return next;
+      });
+      setHighlightFeedbackError(null);
+      setHighlightFeedbackSuccess(null);
+      try {
+        const response = await fetch(`/api/admin/highlight-feedback/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ archived }),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result?.error || "Aktion fehlgeschlagen.");
+        }
+        const entry = normalizeHighlightFeedbackEntry(result?.feedback);
+        if (entry) {
+          setHighlightFeedbackEntries((previous) => {
+            const others = previous.filter((item) => item.id !== entry.id);
+            return [entry, ...others].sort((a, b) => {
+              const dateA = new Date(a.createdAt).getTime();
+              const dateB = new Date(b.createdAt).getTime();
+              return dateB - dateA;
+            });
+          });
+        } else {
+          await loadHighlightFeedbackEntries();
+        }
+        setHighlightFeedbackSuccess(
+          archived ? "Eintrag wurde archiviert." : "Eintrag wurde wiederhergestellt.",
+        );
+      } catch (error) {
+        setHighlightFeedbackError(
+          error instanceof Error ? error.message : "Aktion konnte nicht durchgeführt werden.",
+        );
+      } finally {
+        setHighlightFeedbackActionIds((previous) => {
+          const next = new Set(previous);
+          next.delete(id);
+          return next;
+        });
+      }
+    },
+    [loadHighlightFeedbackEntries, normalizeHighlightFeedbackEntry],
+  );
+
+  const handleHighlightFeedbackDelete = useCallback(
+    async (id: number) => {
+      setHighlightFeedbackActionIds((previous) => {
+        const next = new Set(previous);
+        next.add(id);
+        return next;
+      });
+      setHighlightFeedbackError(null);
+      setHighlightFeedbackSuccess(null);
+      try {
+        const response = await fetch(`/api/admin/highlight-feedback/${id}`, {
+          method: "DELETE",
+        });
+        if (!response.ok && response.status !== 204) {
+          const result = await response.json();
+          throw new Error(result?.error || "Eintrag konnte nicht gelöscht werden.");
+        }
+        setHighlightFeedbackEntries((previous) =>
+          previous.filter((entry) => entry.id !== id),
+        );
+        setHighlightFeedbackSuccess("Eintrag wurde gelöscht.");
+      } catch (error) {
+        setHighlightFeedbackError(
+          error instanceof Error ? error.message : "Eintrag konnte nicht gelöscht werden.",
+        );
+      } finally {
+        setHighlightFeedbackActionIds((previous) => {
+          const next = new Set(previous);
+          next.delete(id);
+          return next;
+        });
+      }
+    },
+    [],
+  );
+
   const handleSaveHighlightSettings = useCallback(async () => {
     if (!highlightSettings) return;
     setHighlightSettingsSaving(true);
@@ -347,6 +570,9 @@ const DashboardPage = () => {
       if (config) {
         setHighlightSettings({
           showSeeds: Boolean(config.showSeeds),
+          showSupportCTA:
+            typeof config.showSupportCTA === "boolean" ? config.showSupportCTA : true,
+          plannedNotes: typeof config.plannedNotes === "string" ? config.plannedNotes : "",
           seeds: Array.isArray(config.seeds) ? config.seeds : [],
         });
       }
@@ -612,6 +838,43 @@ const DashboardPage = () => {
                 </span>
               </label>
 
+              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-gray-800">
+                    Supporter-Hinweisbox auf der Startseite anzeigen
+                  </span>
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    checked={highlightSettings.showSupportCTA}
+                    onChange={(event) => handleSupportCtaToggle(event.target.checked)}
+                  />
+                </div>
+                <span className="text-xs text-gray-500">
+                  Schaltet den Button „Du möchtest PhenoHub unterstützen?“ ein oder aus. Damit kannst du
+                  die Supporter-Box bei Bedarf für Besucher ausblenden.
+                </span>
+              </label>
+
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+                <label className="flex flex-col gap-2 text-sm text-gray-600">
+                  <span className="font-semibold text-gray-800">
+                    Geplante Bereiche & Hinweise (Startseite)
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Beschreibe kurz, welche Features bald kommen (z.&nbsp;B. „Beliebte Samen“, „Apotheken-Sorten“).
+                    Jede neue Zeile wird auf der Startseite als eigener Punkt angezeigt.
+                  </span>
+                  <textarea
+                    value={highlightSettings.plannedNotes}
+                    onChange={(event) => handlePlannedNotesChange(event.target.value)}
+                    rows={4}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    placeholder={"Beliebte Samen\nApotheken-Sorten"}
+                  />
+                </label>
+              </div>
+
               <div className="space-y-4">
                 {highlightSettings.seeds.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
@@ -785,6 +1048,101 @@ const DashboardPage = () => {
                     </div>
                   ))
                 )}
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      Community-Feedback verwalten
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Moderiere die Kommentare zur „Was wir als Nächstes angehen“-Sektion. Archivierte Einträge
+                      bleiben intern erhalten, werden aber nicht öffentlich angezeigt.
+                    </p>
+                  </div>
+                  <button
+                    onClick={loadHighlightFeedbackEntries}
+                    className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    disabled={highlightFeedbackLoading}
+                  >
+                    {highlightFeedbackLoading ? "Lade …" : "Feedback neu laden"}
+                  </button>
+                </div>
+
+                {highlightFeedbackError && (
+                  <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                    {highlightFeedbackError}
+                  </p>
+                )}
+                {highlightFeedbackSuccess && (
+                  <p className="mt-3 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+                    {highlightFeedbackSuccess}
+                  </p>
+                )}
+
+                <div className="mt-4 space-y-3">
+                  {highlightFeedbackLoading ? (
+                    <p className="text-xs text-gray-500">Feedback-Einträge werden geladen …</p>
+                  ) : highlightFeedbackEntries.length === 0 ? (
+                    <p className="text-xs text-gray-500">
+                      Noch keine Community-Kommentare vorhanden.
+                    </p>
+                  ) : (
+                    highlightFeedbackEntries.map((entry) => {
+                      const isBusy = highlightFeedbackActionIds.has(entry.id);
+                      const createdLabel = new Date(entry.createdAt).toLocaleString("de-DE");
+                      const isArchived = Boolean(entry.archivedAt);
+                      return (
+                        <div
+                          key={entry.id}
+                          className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-slate-950"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {entry.displayName}
+                              </p>
+                              <p className="text-xs text-gray-500">Erstellt am {createdLabel}</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {isArchived && (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                  Archiviert
+                                </span>
+                              )}
+                              <button
+                                onClick={() => void handleHighlightFeedbackArchive(entry.id, !isArchived)}
+                                disabled={isBusy}
+                                className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {isArchived ? "Wiederherstellen" : "Archivieren"}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      "Diesen Kommentar dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",
+                                    )
+                                  ) {
+                                    void handleHighlightFeedbackDelete(entry.id);
+                                  }
+                                }}
+                                disabled={isBusy}
+                                className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Löschen
+                              </button>
+                            </div>
+                          </div>
+                          <p className="mt-2 whitespace-pre-line text-sm text-gray-700">
+                            {entry.body}
+                          </p>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-3 pt-2">

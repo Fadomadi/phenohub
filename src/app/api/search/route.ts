@@ -18,6 +18,7 @@ type CultivarWithOfferings = {
   name: string;
   aka: string[];
   cloneOnly: boolean | null;
+  cutInfo?: string | null;
   reportCount: number;
   avgRating: unknown;
   imageCount: number;
@@ -57,6 +58,7 @@ const toCultivar = (cultivar: CultivarWithOfferings) => ({
   name: cultivar.name,
   aka: cultivar.aka,
   cloneOnly: cultivar.cloneOnly,
+  cutInfo: cultivar.cutInfo ?? null,
   reportCount: cultivar.reportCount,
   avgRating: Number(cultivar.avgRating),
   imageCount: cultivar.imageCount,

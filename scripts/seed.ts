@@ -17,6 +17,7 @@ async function main() {
         slug: "papaya-punch",
         aka: ["Papaya"],
         cloneOnly: true,
+        cutInfo: "US Clone",
         reportCount: 47,
         avgRating: "4.7",
         imageCount: 142,
@@ -82,6 +83,51 @@ async function main() {
   const cultivarLookup = Object.fromEntries(
     cultivars.map((cultivar) => [cultivar.slug, cultivar.id]),
   );
+
+  const additionalCultivars: Array<{
+    name: string;
+    cloneOnly: boolean;
+    cutInfo?: string | null;
+  }> = [
+    { name: "Cyberskunk2077", cloneOnly: true, cutInfo: "Clone Only" },
+    { name: "Papaya Punch", cloneOnly: true, cutInfo: "US Clone" },
+    { name: "Forbidden Fruit", cloneOnly: false },
+    { name: "Zombie Kush", cloneOnly: true, cutInfo: "Purple Pheno" },
+    { name: "Super Lemon Haze", cloneOnly: true, cutInfo: "Franco's Cut" },
+    { name: "Blockberry", cloneOnly: false },
+    { name: "Glitterbomb", cloneOnly: false },
+    { name: "Oreoz", cloneOnly: false },
+    { name: "RS11", cloneOnly: false },
+    { name: "Apple Jax", cloneOnly: false },
+    { name: "Super Boof Cherry #26", cloneOnly: false },
+    { name: "Dantes Inferno #8", cloneOnly: true, cutInfo: "Mile High Dave Cut" },
+  ];
+
+  for (const entry of additionalCultivars) {
+    const slug = slugify(entry.name);
+    const cultivar = await prisma.cultivar.upsert({
+      where: { slug },
+      update: {
+        name: entry.name,
+        cloneOnly: entry.cloneOnly,
+        cutInfo: entry.cutInfo ?? null,
+      },
+      create: {
+        name: entry.name,
+        slug,
+        aka: [],
+        cloneOnly: entry.cloneOnly,
+        cutInfo: entry.cutInfo ?? null,
+        reportCount: 0,
+        avgRating: "0",
+        imageCount: 0,
+        trending: false,
+        thumbnails: [],
+      },
+    });
+
+    cultivarLookup[slug] = cultivar.id;
+  }
 
   const providerData = [
       {
@@ -195,6 +241,11 @@ async function main() {
 
   if (!floweryFieldId) {
     throw new Error("Flowery Field provider missing in seed setup");
+  }
+
+  const krummeGurkeId = providerLookup["krumme-gurke"];
+  if (!krummeGurkeId) {
+    throw new Error("Krumme Gurke provider missing in seed setup");
   }
 
   const floweryFieldCultivars: Array<{
@@ -338,6 +389,78 @@ async function main() {
       },
     });
   }
+
+  const krummeGurkeCultivars: Array<{
+    name: string;
+    price?: string | null;
+    category?: string | null;
+  }> = [
+    { name: "Cyberskunk2077", price: "10.50" },
+    { name: "Papaya Punch", price: "9.50" },
+    { name: "Forbidden Fruit", price: "9.50" },
+    { name: "Zombie Kush", price: "9.50" },
+    { name: "Super Lemon Haze", price: "9.50" },
+    { name: "Blockberry", price: "9.50" },
+    { name: "Glitterbomb", price: "9.50" },
+    { name: "Oreoz", price: "9.50" },
+    { name: "RS11", price: "9.50" },
+    { name: "Apple Jax", price: "9.50" },
+    { name: "Super Boof Cherry #26", price: "10.50" },
+    { name: "Dantes Inferno #8", price: "10.50" },
+  ];
+
+  for (const entry of krummeGurkeCultivars) {
+    const slug = slugify(entry.name);
+    const cultivarId = cultivarLookup[slug];
+    if (!cultivarId) {
+      console.warn(`[SEED] Cultivar ${entry.name} missing for Krumme Gurke offerings`);
+      continue;
+    }
+
+    await prisma.cultivarOffering.upsert({
+      where: {
+        providerId_cultivarId: {
+          providerId: krummeGurkeId,
+          cultivarId,
+        },
+      },
+      update: {
+        priceEur: entry.price ?? "9.50",
+        category: entry.category ?? "THC",
+        terpenes: null,
+        notes: null,
+      },
+      create: {
+        providerId: krummeGurkeId,
+        cultivarId,
+        priceEur: entry.price ?? "9.50",
+        category: entry.category ?? "THC",
+        terpenes: null,
+        notes: null,
+      },
+    });
+  }
+
+  await prisma.siteSetting.upsert({
+    where: { key: "highlight-seeds" },
+    update: {
+      value: {
+        showSeeds: true,
+        showSupportCTA: true,
+        plannedNotes: "",
+        seeds: [],
+      },
+    },
+    create: {
+      key: "highlight-seeds",
+      value: {
+        showSeeds: true,
+        showSupportCTA: true,
+        plannedNotes: "",
+        seeds: [],
+      },
+    },
+  });
 
   const reportsData = [
       {

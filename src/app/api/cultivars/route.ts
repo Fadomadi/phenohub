@@ -26,6 +26,7 @@ export async function GET() {
         name: true,
         aka: true,
         breeder: true,
+        cutInfo: true,
       },
       orderBy: [{ name: "asc" }],
     });

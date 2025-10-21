@@ -13,6 +13,7 @@ model Cultivar {
   slug        String             @unique
   aka         String[]           @default([])
   cloneOnly   Boolean            @default(false)
+  cutInfo     String?
   reportCount Int                @default(0)
   avgRating   Decimal            @default(0.0)
   imageCount  Int                @default(0)
@@ -120,6 +121,7 @@ model User {
   comments         ReportComment[]
   likedReports     ReportLike[]
   sessions         Session[]
+  highlightFeedbacks HighlightFeedback[]
   subscriptions    Subscription[]
 }
 
@@ -172,6 +174,20 @@ model ReportComment {
 
   @@index([reportId], map: "idx_report_comment_report")
   @@index([userId], map: "idx_report_comment_user")
+}
+
+model HighlightFeedback {
+  id         Int      @id @default(autoincrement())
+  body       String
+  createdAt  DateTime @default(now())
+  userId     Int?
+  authorName String
+  archivedAt DateTime?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt], map: "idx_highlight_feedback_created_at")
+  @@index([userId], map: "idx_highlight_feedback_user")
+  @@index([archivedAt], map: "idx_highlight_feedback_archived_at")
 }
 
 model Account {

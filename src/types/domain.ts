@@ -4,6 +4,7 @@ export type Cultivar = {
   name: string;
   aka: string[];
   cloneOnly: boolean;
+  cutInfo?: string | null;
   reportCount: number;
   avgRating: number;
   imageCount: number;

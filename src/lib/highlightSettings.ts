@@ -3,6 +3,8 @@ import type { Seed } from "@/types/domain";
 
 export type HighlightSeedConfig = {
   showSeeds: boolean;
+  showSupportCTA: boolean;
+  plannedNotes: string;
   seeds: Seed[];
 };
 
@@ -10,6 +12,8 @@ const HIGHLIGHT_SEEDS_KEY = "highlight-seeds";
 
 const DEFAULT_SEED_CONFIG: HighlightSeedConfig = {
   showSeeds: true,
+  showSupportCTA: true,
+  plannedNotes: "",
   seeds: [],
 };
 
@@ -92,12 +96,20 @@ export const normalizeHighlightSeedConfig = (value: unknown): HighlightSeedConfi
   const record = value as Record<string, unknown>;
   const showSeeds =
     typeof record.showSeeds === "boolean" ? record.showSeeds : DEFAULT_SEED_CONFIG.showSeeds;
+  const showSupportCTA =
+    typeof record.showSupportCTA === "boolean"
+      ? record.showSupportCTA
+      : DEFAULT_SEED_CONFIG.showSupportCTA;
+  const plannedNotes =
+    typeof record.plannedNotes === "string" ? record.plannedNotes : DEFAULT_SEED_CONFIG.plannedNotes;
 
   const seedsRaw = Array.isArray(record.seeds) ? record.seeds : [];
   const seeds = seedsRaw.map((seed, index) => sanitizeSeed(seed, index + 1));
 
   return {
     showSeeds,
+    showSupportCTA,
+    plannedNotes,
     seeds,
   };
 };
@@ -130,6 +142,13 @@ export const saveHighlightSeedConfig = async (
 
   const sanitized = {
     showSeeds: Boolean(config.showSeeds),
+    showSupportCTA: Boolean(
+      typeof config.showSupportCTA === "boolean"
+        ? config.showSupportCTA
+        : DEFAULT_SEED_CONFIG.showSupportCTA,
+    ),
+    plannedNotes:
+      typeof config.plannedNotes === "string" ? config.plannedNotes.trim() : DEFAULT_SEED_CONFIG.plannedNotes,
     seeds: config.seeds.map((seed, index) => sanitizeSeed(seed, index + 1)),
   };
 

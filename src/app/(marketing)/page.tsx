@@ -40,6 +40,16 @@ type Highlights = {
   reports: Report[];
   seeds: Seed[];
   seedsEnabled?: boolean;
+  supportCtaEnabled?: boolean;
+  plannedNotes?: string;
+};
+
+type PlannedFeedbackEntry = {
+  id: number;
+  body: string;
+  displayName: string;
+  createdAt: string;
+  archivedAt: string | null;
 };
 
 const EMPTY_RESULTS: Highlights = {
@@ -48,6 +58,8 @@ const EMPTY_RESULTS: Highlights = {
   reports: [],
   seeds: [],
   seedsEnabled: true,
+  supportCtaEnabled: true,
+  plannedNotes: "",
 };
 
 const filters: { key: SearchFilter; label: string }[] = [
@@ -60,6 +72,12 @@ const filters: { key: SearchFilter; label: string }[] = [
 const StecklingsIndex = () => {
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = sessionStatus === "authenticated" && Boolean(session?.user);
+  const userRole = useMemo(() => {
+    if (!session?.user) return null;
+    const { role } = session.user as { role?: string | null };
+    return role ?? null;
+  }, [session?.user]);
+  const isOwner = userRole === "OWNER";
   const userHandle = useMemo(() => {
     if (!session?.user) return null;
     const { username, name } = session.user as {
@@ -91,6 +109,15 @@ const StecklingsIndex = () => {
   const [searchResults, setSearchResults] = useState<Highlights>(EMPTY_RESULTS);
   const [isSearchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [plannedFeedback, setPlannedFeedback] = useState<PlannedFeedbackEntry[]>([]);
+  const [plannedFeedbackLoading, setPlannedFeedbackLoading] = useState(true);
+  const [plannedFeedbackError, setPlannedFeedbackError] = useState<string | null>(null);
+  const [newPlannedFeedback, setNewPlannedFeedback] = useState("");
+  const [isSubmittingPlannedFeedback, setSubmittingPlannedFeedback] = useState(false);
+  const [plannedFeedbackSuccess, setPlannedFeedbackSuccess] = useState<string | null>(null);
+  const [plannedFeedbackActionIds, setPlannedFeedbackActionIds] = useState<Set<number>>(
+    () => new Set<number>(),
+  );
 
   const formatPrice = useCallback((price?: number | null) => {
     if (price === null || price === undefined) return null;
@@ -186,6 +213,9 @@ const StecklingsIndex = () => {
             typeof data.seedsEnabled === "boolean"
               ? data.seedsEnabled
               : Array.isArray(data.seeds) && data.seeds.length > 0,
+          supportCtaEnabled:
+            typeof data.supportCtaEnabled === "boolean" ? data.supportCtaEnabled : true,
+          plannedNotes: typeof data.plannedNotes === "string" ? data.plannedNotes : "",
         });
       } catch (error) {
         console.error("[MARKETING_HIGHLIGHTS]", error);
@@ -203,6 +233,96 @@ const StecklingsIndex = () => {
       isActive = false;
     };
   }, []);
+
+  const normalizePlannedFeedback = useCallback((entry: unknown): PlannedFeedbackEntry | null => {
+    if (!entry || typeof entry !== "object") return null;
+    const record = entry as Record<string, unknown>;
+    const idRaw = record.id;
+    const id =
+      typeof idRaw === "number"
+        ? idRaw
+        : typeof idRaw === "string" && Number.isFinite(Number(idRaw))
+          ? Number(idRaw)
+          : null;
+    if (!id) return null;
+
+    const body =
+      typeof record.body === "string"
+        ? record.body.trim()
+        : typeof record.body === "number"
+          ? String(record.body)
+          : "";
+    if (!body) return null;
+
+    const displayNameRaw =
+      (typeof record.displayName === "string" && record.displayName.trim().length > 0
+        ? record.displayName
+        : typeof record.authorName === "string" && record.authorName.trim().length > 0
+          ? record.authorName
+          : "Community-Mitglied") ?? "Community-Mitglied";
+
+    const createdAt =
+      typeof record.createdAt === "string" && record.createdAt.length > 0
+        ? record.createdAt
+        : new Date().toISOString();
+
+    const archivedRaw = record.archivedAt;
+    const archivedAt =
+      archivedRaw instanceof Date
+        ? archivedRaw.toISOString()
+        : typeof archivedRaw === "string" && archivedRaw.length > 0
+          ? archivedRaw
+          : null;
+
+    if (archivedAt) {
+      return null;
+    }
+
+    return {
+      id,
+      body,
+      displayName: displayNameRaw.trim(),
+      createdAt,
+      archivedAt,
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+    (async () => {
+      try {
+        setPlannedFeedbackLoading(true);
+        setPlannedFeedbackError(null);
+        setPlannedFeedbackSuccess(null);
+        const response = await fetch("/api/highlight-feedback?limit=40", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`Request failed with ${response.status}`);
+        }
+        const data = (await response.json()) as { feedback?: unknown };
+        if (!isActive) return;
+        const entries = Array.isArray(data.feedback)
+          ? (data.feedback
+              .map((item) => normalizePlannedFeedback(item))
+              .filter((item): item is PlannedFeedbackEntry => Boolean(item)) as PlannedFeedbackEntry[])
+          : [];
+        setPlannedFeedback(entries);
+      } catch (error) {
+        console.error("[HIGHLIGHT_FEEDBACK_FETCH]", error);
+        if (isActive) {
+          setPlannedFeedbackError("Community-Feedback konnte nicht geladen werden.");
+          setPlannedFeedback([]);
+        }
+      } finally {
+        if (isActive) {
+          setPlannedFeedbackLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isActive = false;
+    };
+  }, [normalizePlannedFeedback]);
 
   useEffect(() => {
     if (!debouncedQuery.trim()) {
@@ -336,6 +456,150 @@ const StecklingsIndex = () => {
     [highlights.reports],
   );
   const seedsEnabled = highlights.seedsEnabled ?? highlights.seeds.length > 0;
+  const supportCtaEnabled =
+    typeof highlights.supportCtaEnabled === "boolean" ? highlights.supportCtaEnabled : true;
+  const plannedItems = useMemo(() => {
+    const note = (highlights.plannedNotes ?? "").trim();
+    if (!note) return [];
+    return note.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.length > 0);
+  }, [highlights.plannedNotes]);
+
+  const formatPlannedFeedbackTimestamp = useCallback((iso: string) => {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+    return new Intl.DateTimeFormat("de-DE", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(date);
+  }, []);
+
+  const handleSubmitPlannedFeedback = useCallback(async () => {
+    const content = newPlannedFeedback.trim();
+    if (content.length === 0 || isSubmittingPlannedFeedback) {
+      return;
+    }
+
+    try {
+      setSubmittingPlannedFeedback(true);
+      setPlannedFeedbackError(null);
+      setPlannedFeedbackSuccess(null);
+      const response = await fetch("/api/highlight-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: content }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        const errorMessage =
+          typeof result?.error === "string" && result.error.length > 0
+            ? result.error
+            : "Feedback konnte nicht gespeichert werden.";
+        throw new Error(errorMessage);
+      }
+
+      const entry = normalizePlannedFeedback(result?.feedback);
+      if (entry) {
+        setPlannedFeedback((previous) => [entry, ...previous].slice(0, 40));
+      }
+      setNewPlannedFeedback("");
+      setPlannedFeedbackSuccess("Dein Feedback wurde gespeichert.");
+    } catch (error) {
+      console.error("[HIGHLIGHT_FEEDBACK_SUBMIT]", error);
+      setPlannedFeedbackError(
+        error instanceof Error ? error.message : "Feedback konnte nicht gespeichert werden.",
+      );
+    } finally {
+      setSubmittingPlannedFeedback(false);
+    }
+  }, [isSubmittingPlannedFeedback, newPlannedFeedback, normalizePlannedFeedback]);
+
+  const handleArchivePlannedFeedback = useCallback(
+    async (id: number, archived: boolean) => {
+      if (!isOwner) return;
+      setPlannedFeedbackActionIds((previous) => {
+        const next = new Set(previous);
+        next.add(id);
+        return next;
+      });
+      setPlannedFeedbackError(null);
+      setPlannedFeedbackSuccess(null);
+      try {
+        const response = await fetch(`/api/admin/highlight-feedback/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ archived }),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result?.error || "Aktion konnte nicht ausgeführt werden.");
+        }
+        if (archived) {
+          setPlannedFeedback((previous) => previous.filter((item) => item.id !== id));
+          setPlannedFeedbackSuccess("Kommentar wurde archiviert und verschwindet von der Seite.");
+        } else {
+          const entry = normalizePlannedFeedback(result?.feedback);
+          if (entry) {
+            setPlannedFeedback((previous) => {
+              const others = previous.filter((item) => item.id !== entry.id);
+              return [entry, ...others];
+            });
+          }
+          setPlannedFeedbackSuccess("Kommentar wurde wiederhergestellt.");
+        }
+      } catch (error) {
+        console.error("[HIGHLIGHT_FEEDBACK_ARCHIVE]", error);
+        setPlannedFeedbackError(
+          error instanceof Error ? error.message : "Kommentar konnte nicht aktualisiert werden.",
+        );
+      } finally {
+        setPlannedFeedbackActionIds((previous) => {
+          const next = new Set(previous);
+          next.delete(id);
+          return next;
+        });
+      }
+    },
+    [isOwner, normalizePlannedFeedback],
+  );
+
+  const handleDeletePlannedFeedback = useCallback(
+    async (id: number) => {
+      if (!isOwner) return;
+      setPlannedFeedbackActionIds((previous) => {
+        const next = new Set(previous);
+        next.add(id);
+        return next;
+      });
+      setPlannedFeedbackError(null);
+      setPlannedFeedbackSuccess(null);
+      try {
+        const response = await fetch(`/api/admin/highlight-feedback/${id}`, {
+          method: "DELETE",
+        });
+        if (!response.ok && response.status !== 204) {
+          const result = await response.json();
+          throw new Error(result?.error || "Kommentar konnte nicht gelöscht werden.");
+        }
+        setPlannedFeedback((previous) => previous.filter((item) => item.id !== id));
+        setPlannedFeedbackSuccess("Kommentar wurde gelöscht.");
+      } catch (error) {
+        console.error("[HIGHLIGHT_FEEDBACK_DELETE]", error);
+        setPlannedFeedbackError(
+          error instanceof Error ? error.message : "Kommentar konnte nicht gelöscht werden.",
+        );
+      } finally {
+        setPlannedFeedbackActionIds((previous) => {
+          const next = new Set(previous);
+          next.delete(id);
+          return next;
+        });
+      }
+    },
+    [isOwner],
+  );
   const topSeeds = useMemo(() => {
     if (!seedsEnabled) return [];
     return [...highlights.seeds].sort((a, b) => b.popularity - a.popularity).slice(0, 6);
@@ -462,12 +726,13 @@ const StecklingsIndex = () => {
             Endlich Schluss mit Suchen.
           </h1>
           <p className="mb-4 text-2xl font-medium text-gray-700 dark:text-slate-200">
-            Vergleichsfotos, echte Erfahrungsberichte und Bewertungen – alles
-            zu deinem Steckling an einem Ort.
+            Bevor dein Grow startet, weißt du schon, was dich erwartet.
           </p>
           <p className="mx-auto max-w-2xl text-xl text-gray-600 dark:text-slate-300">
-            Finde Sorten, Anbieter und Erfahrungen in Sekunden – keine Werbung,
-            nur Fakten.
+            Vergleichsfotos, echte Erfahrungen und Bewertungen – alles an einem Ort.
+          </p>
+          <p className="mx-auto max-w-2xl text-lg text-gray-600 dark:text-slate-300">
+            Finde Sorten, Anbieter und Erfahrungen in Sekunden.
           </p>
         </div>
 
@@ -1007,24 +1272,183 @@ const StecklingsIndex = () => {
         )}
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-8">
-        <div className="flex justify-end">
-          <div className="w-full max-w-sm rounded-2xl border border-green-200 bg-white/95 p-5 text-right shadow-lg shadow-green-100/40 dark:border-slate-700 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-slate-950/40">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
-              Du möchtest PhenoHub unterstützen?
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-slate-300">
-              Freiwilliges 3,99 € Supporter-Abo für Serverkosten & neue Features.
-            </p>
-            <Link
-              href="/support"
-              className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-1 dark:bg-sky-500 dark:hover:bg-sky-400"
-            >
-              ❤️ Mehr erfahren & eintragen
-            </Link>
+      {plannedItems.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 pb-4">
+          <div className="rounded-3xl border border-dashed border-emerald-300 bg-emerald-50/70 p-6 shadow-sm backdrop-blur-sm dark:border-sky-500/60 dark:bg-slate-900/70">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-emerald-900 dark:text-sky-200">
+                  Was wir als Nächstes angehen
+                </h3>
+                <p className="text-sm text-emerald-800/80 dark:text-sky-300/80">
+                  Wir planen diese Bereiche – und die Community entscheidet mit, was Priorität bekommt.
+                </p>
+              </div>
+            </div>
+            <ul className="mt-4 grid gap-2 text-sm text-emerald-900/90 dark:text-sky-100 sm:grid-cols-2">
+              {plannedItems.map((item, index) => (
+                <li
+                  key={`${item}-${index}`}
+                  className="flex items-start gap-2 rounded-xl bg-white/70 px-3 py-2 shadow-sm ring-1 ring-white/40 backdrop-blur-sm dark:bg-slate-950/40 dark:ring-slate-800/60"
+                >
+                  <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-emerald-400 dark:bg-sky-400" />
+                  <span className="leading-snug">{item}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 rounded-2xl border border-emerald-200/60 bg-white/70 p-4 shadow-sm backdrop-blur-sm dark:border-sky-500/40 dark:bg-slate-950/50">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h4 className="text-base font-semibold text-emerald-900 dark:text-sky-200">
+                    Community-Feedback
+                  </h4>
+                  <p className="text-xs text-emerald-800/80 dark:text-sky-300/80">
+                    Teile Ideen, Wünsche oder Ergänzungen – wir berücksichtigen alles bei der nächsten Planung.
+                  </p>
+                </div>
+                {!isAuthenticated && (
+                  <Link
+                   href="/login?callbackUrl=%2F"
+                   className="mt-2 inline-flex items-center justify-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-300 dark:border-sky-500/50 dark:text-sky-200 dark:hover:bg-slate-900/60"
+                  >
+                    Anmelden & mitdiskutieren
+                  </Link>
+                )}
+              </div>
+              {plannedFeedbackError && (
+                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                  {plannedFeedbackError}
+                </p>
+              )}
+              {plannedFeedbackSuccess && (
+                <p className="mt-3 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+                  {plannedFeedbackSuccess}
+                </p>
+              )}
+              <div className="mt-4 space-y-3">
+                {plannedFeedbackLoading ? (
+                  <p className="text-xs text-emerald-700/70 dark:text-sky-300/80">
+                    Lade Community-Stimmen …
+                  </p>
+                ) : plannedFeedback.length === 0 ? (
+                  <p className="text-xs text-emerald-700/80 dark:text-sky-300/80">
+                    Noch keine Kommentare – starte gerne mit deinem Vorschlag!
+                  </p>
+                ) : (
+                  <ul className="space-y-3">
+                    {plannedFeedback.map((entry) => {
+                      const isBusy = plannedFeedbackActionIds.has(entry.id);
+                      return (
+                        <li
+                          key={entry.id}
+                          className="rounded-2xl border border-emerald-200/70 bg-white/90 px-3 py-2 text-sm shadow-sm dark:border-sky-500/40 dark:bg-slate-950/60"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                              <span className="block font-semibold text-emerald-900 dark:text-sky-100">
+                                {entry.displayName}
+                              </span>
+                              <span className="text-xs text-emerald-700/70 dark:text-sky-300/70">
+                                {formatPlannedFeedbackTimestamp(entry.createdAt)}
+                              </span>
+                            </div>
+                            {isOwner && (
+                              <div className="flex flex-wrap items-center gap-2 text-xs">
+                                <button
+                                  type="button"
+                                  onClick={() => void handleArchivePlannedFeedback(entry.id, true)}
+                                  disabled={isBusy}
+                                  className="rounded-lg border border-emerald-200 px-2.5 py-1 font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-500/50 dark:text-sky-200 dark:hover:bg-slate-900/60"
+                                >
+                                  Archivieren
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (
+                                      window.confirm(
+                                        "Diesen Kommentar endgültig löschen?",
+                                      )
+                                    ) {
+                                      void handleDeletePlannedFeedback(entry.id);
+                                    }
+                                  }}
+                                  disabled={isBusy}
+                                  className="rounded-lg border border-red-200 px-2.5 py-1 font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                                >
+                                  Löschen
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          <p className="mt-1 whitespace-pre-line text-sm leading-snug text-emerald-900/90 dark:text-sky-100/90">
+                            {entry.body}
+                          </p>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+              {isAuthenticated && (
+                <div className="mt-4 space-y-2">
+                  <textarea
+                    value={newPlannedFeedback}
+                    onChange={(event) => {
+                      if (event.target.value.length <= 600) {
+                        setNewPlannedFeedback(event.target.value);
+                      } else {
+                        setNewPlannedFeedback(event.target.value.slice(0, 600));
+                      }
+                    }}
+                    rows={3}
+                    className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm text-emerald-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-sky-500/40 dark:bg-slate-950 dark:text-sky-100"
+                    placeholder="Deine Idee oder Anmerkung …"
+                  />
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="text-emerald-700/70 dark:text-sky-300/70">
+                      {Math.max(0, 600 - newPlannedFeedback.length)} Zeichen übrig
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSubmitPlannedFeedback}
+                      disabled={
+                        newPlannedFeedback.trim().length < 5 ||
+                        isSubmittingPlannedFeedback ||
+                        newPlannedFeedback.length === 0
+                      }
+                      className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300 dark:bg-sky-500 dark:hover:bg-sky-400 dark:disabled:bg-slate-700"
+                    >
+                      {isSubmittingPlannedFeedback ? "Speichere …" : "Feedback senden"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {supportCtaEnabled && (
+        <section className="mx-auto max-w-7xl px-4 py-8">
+          <div className="flex justify-end">
+            <div className="w-full max-w-sm rounded-2xl border border-green-200 bg-white/95 p-5 text-right shadow-lg shadow-green-100/40 dark:border-slate-700 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-slate-950/40">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
+                Du möchtest PhenoHub unterstützen?
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-slate-300">
+                Freiwilliges 3,99&nbsp;€ Supporter-Abo für Serverkosten &amp; neue Features.
+              </p>
+              <Link
+                href="/support"
+                className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-1 dark:bg-sky-500 dark:hover:bg-sky-400"
+              >
+                ❤️ Mehr erfahren & eintragen
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="mt-8 border-t border-amber-200 bg-amber-50 dark:border-slate-800 dark:bg-slate-950/80">
         <div className="mx-auto max-w-7xl px-4 py-8">
