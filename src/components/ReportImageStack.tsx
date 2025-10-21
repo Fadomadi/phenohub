@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 type ReportImageStackItem = {
@@ -136,9 +137,101 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
     return undefined;
   }, [activeItem, closeModal, nextImage, previousImage]);
 
+  const modal = activeItem && modalSource ? (
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 px-3 py-6 md:px-6 md:py-10"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Bildvorschau"
+    >
+      <button
+        type="button"
+        onClick={closeModal}
+        className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-lg transition hover:bg-white"
+        aria-label="Vorschau schließen"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
+      >
+        <X className="h-5 w-5" />
+      </button>
+
+      <button
+        type="button"
+        onClick={previousImage}
+        className="absolute left-6 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/20 p-3 text-white transition hover:bg-white/40 md:flex"
+        aria-label="Vorheriges Bild"
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+
+      <button
+        type="button"
+        onClick={nextImage}
+        className="absolute right-6 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/20 p-3 text-white transition hover:bg-white/40 md:flex"
+        aria-label="Nächstes Bild"
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
+
+      <div className="w-full max-w-[92vw] space-y-4 md:space-y-5 lg:max-w-5xl">
+        <div className="flex max-h-[82vh] items-center justify-center overflow-hidden rounded-3xl border border-white/30 bg-black/30 backdrop-blur">
+          <img
+            src={modalSource}
+            alt={activeItem.alt}
+            className="max-h-[82vh] w-auto max-w-full object-contain"
+            loading="eager"
+            onError={handleModalError}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 text-sm text-white/80">
+          <span className="truncate">{activeItem.alt}</span>
+        </div>
+
+        {normalizedItems.length > 1 && (
+          <div className="grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8">
+            {normalizedItems.map((item, index) => (
+              <button
+                key={`${item.id}-thumb`}
+                type="button"
+                onClick={() => {
+                  setActiveIndex(index);
+                  setActiveSourceIndex(0);
+                }}
+                className={`relative h-20 overflow-hidden rounded-xl border ${index === activeIndex ? "border-green-400 ring-2 ring-green-300" : "border-white/30"}`}
+                aria-label={`${item.alt} auswählen`}
+              >
+                <img
+                  src={item.sources[0]}
+                  alt={item.alt}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={closeModal}
+          className="w-full rounded-2xl border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:hidden"
+          aria-label="Vorschau schließen"
+        >
+          Schließen
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   if (!hasItems) {
     return null;
   }
+
+  const modalNode =
+    modal === null
+      ? null
+      : typeof document !== "undefined"
+        ? createPortal(modal, document.body)
+        : modal;
 
   return (
     <>
@@ -156,90 +249,7 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
         ))}
       </div>
 
-      {activeItem && modalSource && (
-        <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 px-4 py-8"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Bildvorschau"
-        >
-          <button
-            type="button"
-            onClick={closeModal}
-            className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-lg transition hover:bg-white"
-            aria-label="Vorschau schließen"
-            style={{ top: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={previousImage}
-            className="absolute left-6 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/20 p-3 text-white transition hover:bg-white/40 md:flex"
-            aria-label="Vorheriges Bild"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={nextImage}
-            className="absolute right-6 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/20 p-3 text-white transition hover:bg-white/40 md:flex"
-            aria-label="Nächstes Bild"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-
-          <div className="w-full max-w-4xl space-y-4">
-            <div className="flex max-h-[75vh] items-center justify-center overflow-hidden rounded-3xl border border-white/30 bg-black/30 backdrop-blur">
-              <img
-                src={modalSource}
-                alt={activeItem.alt}
-                className="max-h-[75vh] w-auto max-w-full object-contain"
-                loading="eager"
-                onError={handleModalError}
-              />
-            </div>
-            <div className="flex items-center justify-between gap-3 text-sm text-white/80">
-              <span className="truncate">{activeItem.alt}</span>
-            </div>
-
-            {normalizedItems.length > 1 && (
-              <div className="grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8">
-                {normalizedItems.map((item, index) => (
-                  <button
-                    key={`${item.id}-thumb`}
-                    type="button"
-                    onClick={() => {
-                      setActiveIndex(index);
-                      setActiveSourceIndex(0);
-                    }}
-                    className={`relative h-20 overflow-hidden rounded-xl border ${index === activeIndex ? "border-green-400 ring-2 ring-green-300" : "border-white/30"}`}
-                    aria-label={`${item.alt} auswählen`}
-                  >
-                    <img
-                      src={item.sources[0]}
-                      alt={item.alt}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={closeModal}
-              className="w-full rounded-2xl border border-white/20 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20 md:hidden"
-              aria-label="Vorschau schließen"
-            >
-              Schließen
-            </button>
-          </div>
-        </div>
-      )}
+      {modalNode}
     </>
   );
 };

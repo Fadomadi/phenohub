@@ -1,14 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Heart, ShieldCheck, Sprout } from "lucide-react";
 
 const SupportPage = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setSubmitting] = useState(false);
+  const [isCheckoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    if (status === "success") {
+      setSuccess("Danke! Dein Supporter-Abo wurde aktiviert. ❤️");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (status === "cancelled") {
+      setError("Checkout abgebrochen. Du kannst es jederzeit erneut versuchen.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -49,6 +63,44 @@ const SupportPage = () => {
     }
   };
 
+  const handleCheckout = async () => {
+    setError(null);
+    setSuccess(null);
+    setCheckoutLoading(true);
+
+    try {
+      const response = await fetch("/api/checkout/session", {
+        method: "POST",
+      });
+
+      if (response.status === 401) {
+        const callbackUrl = encodeURIComponent(window.location.href);
+        window.location.href = `/login?callbackUrl=${callbackUrl}`;
+        return;
+      }
+
+      const payload = await response.json();
+      if (!response.ok || typeof payload?.sessionId !== "string") {
+        throw new Error(payload?.error ?? "Checkout konnte nicht gestartet werden.");
+      }
+
+      if (typeof payload?.url === "string" && payload.url.startsWith("http")) {
+        window.location.href = payload.url;
+        return;
+      }
+
+      throw new Error("Fehler beim Abrufen der Checkout-URL.");
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Checkout konnte nicht gestartet werden.";
+      setError(message);
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-green-100/60">
       <header className="border-b bg-white/90 backdrop-blur-md shadow-sm">
@@ -83,7 +135,7 @@ const SupportPage = () => {
               <Heart className="h-7 w-7" />
             </div>
             <h1 className="text-4xl font-bold text-gray-900">
-              Supporter werden – 4,00 € / Monat
+              Supporter werden – 3,99 € / Monat
             </h1>
             <p className="text-lg leading-relaxed text-gray-600">
               Hilf mit, dass PhenoHub online bleibt und weiter wächst. Dein Beitrag deckt Serverkosten,
@@ -111,7 +163,7 @@ const SupportPage = () => {
               <Sprout className="h-5 w-5" />
             </div>
             <h2 className="text-lg font-semibold text-gray-900">
-              Wohin die 4 € gehen
+              Wohin die 3,99 € eingehen
             </h2>
             <ul className="mt-3 space-y-2 text-sm text-gray-600">
               <li>• Hosting & Datenbank (Render / CDN / Storage)</li>
@@ -126,9 +178,19 @@ const SupportPage = () => {
             Wie kannst du aktuell beitragen?
           </h3>
           <p className="text-sm leading-relaxed text-gray-600">
-            Das Supporter-Abo startet in Kürze. Trage dich ein und wir melden uns, sobald das
-            automatisierte 4,00 €-Monatsabo (Stripe) live geht. Alternativ kannst du jetzt schon
-            manuell via PayPal oder Banktransfer unterstützen – Details erhältst du nach dem Eintrag.
+            Du kannst dein Supporter-Abo sofort über Stripe starten. Alternativ informieren wir dich
+            per E-Mail, falls du später einsteigen möchtest oder andere Optionen bevorzugst.
+          </p>
+          <button
+            type="button"
+            onClick={handleCheckout}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-green-400"
+            disabled={isCheckoutLoading}
+          >
+            {isCheckoutLoading ? "Stripe wird geladen…" : "Supporter-Abo starten (Stripe)"}
+          </button>
+          <p className="text-xs text-gray-500">
+            Du brauchst Stripe nicht? Lass dich stattdessen per E-Mail informieren:
           </p>
           <form className="space-y-3" onSubmit={handleSubmit} noValidate>
             <label className="space-y-2 text-sm text-gray-700">
@@ -150,7 +212,7 @@ const SupportPage = () => {
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-green-400"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Trage dich ein…" : "Ich möchte Supporter werden"}
+              {isSubmitting ? "Trage dich ein…" : "Nur informieren lassen"}
             </button>
             {(error || success) && (
               <p

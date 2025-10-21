@@ -79,6 +79,8 @@ const fetchCultivarFromDatabase = async (slug: string) => {
   const previewImages = reports
     .flatMap((report) => report.images)
     .filter((image): image is string => typeof image === "string" && image.length > 0);
+  const computedImageCount =
+    previewImages.length > 0 ? previewImages.length : Number(cultivar.imageCount ?? 0);
 
   return {
     id: cultivar.id,
@@ -88,7 +90,7 @@ const fetchCultivarFromDatabase = async (slug: string) => {
     cloneOnly: Boolean(cultivar.cloneOnly),
     reportCount: Number(cultivar.reportCount ?? 0),
     avgRating: Number(cultivar.avgRating ?? 0),
-    imageCount: Number(cultivar.imageCount ?? 0),
+    imageCount: computedImageCount,
     trending: Boolean(cultivar.trending),
     thumbnails: Array.isArray(cultivar.thumbnails)
       ? cultivar.thumbnails.filter((value): value is string => typeof value === "string")
@@ -122,11 +124,14 @@ const fetchCultivarFallback = (slug: string) => {
   const previewImages = reports
     .flatMap((report) => report.images)
     .filter((image): image is string => typeof image === "string" && image.length > 0);
+  const computedImageCount =
+    previewImages.length > 0 ? previewImages.length : Number(cultivar.imageCount ?? 0);
 
   return {
     ...cultivar,
     reports,
     previewImages,
+    imageCount: computedImageCount,
   };
 };
 
@@ -269,17 +274,19 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
             {/* Rechte Spalte: Bilder */}
             <div className="flex flex-none flex-col gap-2 lg:w-72 lg:pl-10 lg:justify-center">
               <div className="mb-1 hidden lg:block text-sm font-medium text-gray-400 pl-1">Bilder</div>
-              <div className="rounded-3xl border border-gray-100 bg-white p-3 shadow-sm">
-                {previewStackItems.length > 0 ? (
-                  <ReportImageStack
-                    items={previewStackItems}
-                    className="md:ml-6 md:w-64 md:drop-shadow-xl"
-                  />
-                ) : (
-                  <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
-                    Noch keine Bilder aus Community-Berichten vorhanden.
-                  </p>
-                )}
+              <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
+                <div className="flex justify-center">
+                  {previewStackItems.length > 0 ? (
+                    <ReportImageStack
+                      items={previewStackItems}
+                      className="w-full max-w-[232px] justify-items-center md:max-w-[256px] md:drop-shadow-xl"
+                    />
+                  ) : (
+                    <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                      Noch keine Bilder aus Community-Berichten vorhanden.
+                    </p>
+                  )}
+                </div>
               </div>
 
               {providerNames.length > 0 && (

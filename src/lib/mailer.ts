@@ -68,7 +68,7 @@ const buildConfirmationContent = (email: string) => {
     "Hey 👋",
     "",
     "Danke, dass du dich für die PhenoHub Supporter-Liste eingetragen hast.",
-    "Wir melden uns bei dir, sobald das 4 €-Monatsabo live ist und halten dich über neue Features auf dem Laufenden.",
+    "Wir melden uns bei dir, sobald das 3,99 €-Monatsabo live ist und halten dich über neue Features auf dem Laufenden.",
     "",
     "Bis bald und happy growing! 🌱",
     "",
@@ -79,7 +79,7 @@ const buildConfirmationContent = (email: string) => {
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2933;">
       <p>Hey 👋</p>
       <p>Danke, dass du dich für die PhenoHub Supporter-Liste eingetragen hast.</p>
-      <p>Wir melden uns bei dir, sobald das 4 €-Monatsabo live ist und halten dich über neue Features auf dem Laufenden.</p>
+      <p>Wir melden uns bei dir, sobald das 3,99 €-Monatsabo live ist und halten dich über neue Features auf dem Laufenden.</p>
       <p>Bis bald und happy growing! 🌱</p>
       <p>— Dein PhenoHub Team</p>
     </div>
