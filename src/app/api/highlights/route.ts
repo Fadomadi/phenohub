@@ -200,6 +200,7 @@ const mapMockCultivar = (cultivar: (typeof mockCultivars)[number]): CultivarHigh
   name: cultivar.name,
   aka: cultivar.aka,
   cloneOnly: cultivar.cloneOnly,
+  cutInfo: (cultivar as { cutInfo?: string | null }).cutInfo ?? null,
   reportCount: cultivar.reportCount,
   avgRating: cultivar.avgRating,
   imageCount: cultivar.imageCount,

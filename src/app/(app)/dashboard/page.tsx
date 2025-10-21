@@ -303,8 +303,11 @@ const DashboardPage = () => {
       }
       const entries = Array.isArray(result?.feedback)
         ? (result.feedback
-            .map((item) => normalizeHighlightFeedbackEntry(item))
-            .filter((item): item is HighlightFeedbackAdminEntry => Boolean(item)) as HighlightFeedbackAdminEntry[])
+            .map((item: unknown) => normalizeHighlightFeedbackEntry(item))
+            .filter(
+              (item: HighlightFeedbackAdminEntry | null): item is HighlightFeedbackAdminEntry =>
+                Boolean(item),
+            ) as HighlightFeedbackAdminEntry[])
         : [];
       setHighlightFeedbackEntries(entries);
     } catch (error) {

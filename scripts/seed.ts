@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 const slugify = (value: string) =>
   value
@@ -365,6 +365,8 @@ async function main() {
           }
         })()
       : null;
+    const terpenesValue =
+      parsedTerpenes !== null && parsedTerpenes !== undefined ? parsedTerpenes : Prisma.JsonNull;
 
     await prisma.cultivarOffering.upsert({
       where: {
@@ -376,7 +378,7 @@ async function main() {
       update: {
         priceEur: offering.price,
         category: offering.category ?? null,
-        terpenes: parsedTerpenes,
+        terpenes: terpenesValue,
         notes: offering.notes ?? null,
       },
       create: {
@@ -384,7 +386,7 @@ async function main() {
         cultivarId: cultivar.id,
         priceEur: offering.price,
         category: offering.category ?? null,
-        terpenes: parsedTerpenes,
+        terpenes: terpenesValue,
         notes: offering.notes ?? null,
       },
     });
@@ -427,7 +429,7 @@ async function main() {
       update: {
         priceEur: entry.price ?? "9.50",
         category: entry.category ?? "THC",
-        terpenes: null,
+        terpenes: Prisma.JsonNull,
         notes: null,
       },
       create: {
@@ -435,7 +437,7 @@ async function main() {
         cultivarId,
         priceEur: entry.price ?? "9.50",
         category: entry.category ?? "THC",
-        terpenes: null,
+        terpenes: Prisma.JsonNull,
         notes: null,
       },
     });
