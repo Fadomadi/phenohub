@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
   Building2,
@@ -42,6 +43,8 @@ type Highlights = {
   seedsEnabled?: boolean;
   supportCtaEnabled?: boolean;
   plannedNotes?: string;
+  showCommunityFeedback?: boolean;
+  showCommunityNav?: boolean;
 };
 
 type PlannedFeedbackEntry = {
@@ -60,6 +63,8 @@ const EMPTY_RESULTS: Highlights = {
   seedsEnabled: true,
   supportCtaEnabled: true,
   plannedNotes: "",
+  showCommunityFeedback: true,
+  showCommunityNav: true,
 };
 
 const filters: { key: SearchFilter; label: string }[] = [
@@ -72,6 +77,9 @@ const filters: { key: SearchFilter; label: string }[] = [
 const StecklingsIndex = () => {
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = sessionStatus === "authenticated" && Boolean(session?.user);
+  const router = useRouter();
+  const pathname = usePathname();
+  const loginHref = useMemo(() => `/login?callbackUrl=${encodeURIComponent(pathname ?? "/")}`, [pathname]);
   const userRole = useMemo(() => {
     if (!session?.user) return null;
     const { role } = session.user as { role?: string | null };
@@ -118,6 +126,9 @@ const StecklingsIndex = () => {
   const [plannedFeedbackActionIds, setPlannedFeedbackActionIds] = useState<Set<number>>(
     () => new Set<number>(),
   );
+  const [isImprintOpen, setImprintOpen] = useState(false);
+  const [isPrivacyOpen, setPrivacyOpen] = useState(false);
+  const [isTermsOpen, setTermsOpen] = useState(false);
 
   const formatPrice = useCallback((price?: number | null) => {
     if (price === null || price === undefined) return null;
@@ -175,7 +186,10 @@ const StecklingsIndex = () => {
       isReportsModalOpen ||
       isCultivarModalOpen ||
       isProvidersModalOpen ||
-      isSeedsModalOpen
+      isSeedsModalOpen ||
+      isImprintOpen ||
+      isPrivacyOpen ||
+      isTermsOpen
     ) {
       document.body.style.overflow = "hidden";
     }
@@ -190,6 +204,9 @@ const StecklingsIndex = () => {
     isCultivarModalOpen,
     isProvidersModalOpen,
     isSeedsModalOpen,
+    isImprintOpen,
+    isPrivacyOpen,
+    isTermsOpen,
   ]);
 
   useEffect(() => {
@@ -216,6 +233,10 @@ const StecklingsIndex = () => {
           supportCtaEnabled:
             typeof data.supportCtaEnabled === "boolean" ? data.supportCtaEnabled : true,
           plannedNotes: typeof data.plannedNotes === "string" ? data.plannedNotes : "",
+          showCommunityFeedback:
+            typeof data.showCommunityFeedback === "boolean" ? data.showCommunityFeedback : true,
+          showCommunityNav:
+            typeof data.showCommunityNav === "boolean" ? data.showCommunityNav : true,
         });
       } catch (error) {
         console.error("[MARKETING_HIGHLIGHTS]", error);
@@ -458,6 +479,12 @@ const StecklingsIndex = () => {
   const seedsEnabled = highlights.seedsEnabled ?? highlights.seeds.length > 0;
   const supportCtaEnabled =
     typeof highlights.supportCtaEnabled === "boolean" ? highlights.supportCtaEnabled : true;
+  const communityNavEnabled =
+    typeof highlights.showCommunityNav === "boolean" ? highlights.showCommunityNav : true;
+  const communityFeedbackEnabled =
+    typeof highlights.showCommunityFeedback === "boolean"
+      ? highlights.showCommunityFeedback
+      : true;
   const plannedItems = useMemo(() => {
     const note = (highlights.plannedNotes ?? "").trim();
     if (!note) return [];
@@ -481,6 +508,13 @@ const StecklingsIndex = () => {
       return;
     }
 
+    if (!isAuthenticated) {
+      setPlannedFeedbackError("Bitte melde dich an, um Feedback zu senden.");
+      const callbackUrl = encodeURIComponent(pathname ?? "/");
+      router.push(`/login?callbackUrl=${callbackUrl}`);
+      return;
+    }
+
     try {
       setSubmittingPlannedFeedback(true);
       setPlannedFeedbackError(null);
@@ -490,6 +524,14 @@ const StecklingsIndex = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body: content }),
       });
+
+      if (response.status === 401) {
+        setPlannedFeedbackError("Bitte melde dich an, um Feedback zu senden.");
+        const callbackUrl = encodeURIComponent(pathname ?? "/");
+        router.push(`/login?callbackUrl=${callbackUrl}`);
+        setSubmittingPlannedFeedback(false);
+        return;
+      }
 
       const result = await response.json();
       if (!response.ok) {
@@ -514,7 +556,14 @@ const StecklingsIndex = () => {
     } finally {
       setSubmittingPlannedFeedback(false);
     }
-  }, [isSubmittingPlannedFeedback, newPlannedFeedback, normalizePlannedFeedback]);
+  }, [
+    isAuthenticated,
+    isSubmittingPlannedFeedback,
+    newPlannedFeedback,
+    normalizePlannedFeedback,
+    pathname,
+    router,
+  ]);
 
   const handleArchivePlannedFeedback = useCallback(
     async (id: number, archived: boolean) => {
@@ -660,12 +709,14 @@ const StecklingsIndex = () => {
             🌱 PhenoHub
           </Link>
           <nav className="flex flex-wrap items-center justify-end gap-2 text-sm">
-            <Link
-              href="/community"
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-green-50 via-white to-green-100 px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:from-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 dark:border dark:border-slate-800 dark:bg-slate-900/80 dark:text-sky-200 dark:hover:bg-slate-800 dark:hover:text-sky-100"
-            >
-              💬 Community
-            </Link>
+            {communityNavEnabled && (
+              <Link
+                href="/community"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-green-50 via-white to-green-100 px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:from-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 dark:border dark:border-slate-800 dark:bg-slate-900/80 dark:text-sky-200 dark:hover:bg-slate-800 dark:hover:text-sky-100"
+              >
+                💬 Community
+              </Link>
+            )}
 
             {isAuthenticated ? (
               <>
@@ -1272,7 +1323,7 @@ const StecklingsIndex = () => {
         )}
       </section>
 
-      {plannedItems.length > 0 && (
+      {communityFeedbackEnabled && plannedItems.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pb-4">
           <div className="rounded-3xl border border-dashed border-emerald-300 bg-emerald-50/70 p-6 shadow-sm backdrop-blur-sm dark:border-sky-500/60 dark:bg-slate-900/70">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1308,8 +1359,8 @@ const StecklingsIndex = () => {
                 </div>
                 {!isAuthenticated && (
                   <Link
-                   href="/login?callbackUrl=%2F"
-                   className="mt-2 inline-flex items-center justify-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-300 dark:border-sky-500/50 dark:text-sky-200 dark:hover:bg-slate-900/60"
+                    href={loginHref}
+                    className="mt-2 inline-flex items-center justify-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-300 dark:border-sky-500/50 dark:text-sky-200 dark:hover:bg-slate-900/60"
                   >
                     Anmelden & mitdiskutieren
                   </Link>
@@ -1461,24 +1512,27 @@ const StecklingsIndex = () => {
                 Nutzern. Bitte beachte lokale Gesetze.
               </p>
               <div className="flex gap-4 text-sm text-gray-600 dark:text-slate-300">
-                <Link
-                  href="/impressum"
-                  className="text-green-700 underline transition-colors hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                <button
+                  type="button"
+                  onClick={() => setImprintOpen(true)}
+                  className="text-green-700 underline transition-colors hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
                 >
                   Impressum
-                </Link>
-                <Link
-                  href="/datenschutz"
-                  className="text-green-700 underline transition-colors hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrivacyOpen(true)}
+                  className="text-green-700 underline transition-colors hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
                 >
                   Datenschutz
-                </Link>
-                <Link
-                  href="/nutzungsbedingungen"
-                  className="text-green-700 underline transition-colors hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(true)}
+                  className="text-green-700 underline transition-colors hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
                 >
                   Nutzungsbedingungen
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -1525,6 +1579,258 @@ const StecklingsIndex = () => {
         />
       )}
       <AboutModal isOpen={isAboutOpen} onClose={() => setAboutOpen(false)} />
+      {isImprintOpen && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="imprint-title"
+        >
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-green-100 bg-white/95 p-6 shadow-2xl shadow-green-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-900/60">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <p className="inline-flex items-center rounded-full border border-green-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-green-700 dark:border-sky-500/60 dark:text-sky-200">
+                  Rechtliche Angaben
+                </p>
+                <h2 id="imprint-title" className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
+                  Impressum
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setImprintOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                aria-label="Impressum schließen"
+              >
+                ×
+              </button>
+            </div>
+            <div className="mt-6 space-y-6 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
+              <section>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Betreiber</h3>
+                <address className="mt-2 space-y-1 not-italic">
+                  <p>PhenoHub – Andrej Petri</p>
+                  <p>Straße des 17. Juni 12</p>
+                  <p>10623 Berlin</p>
+                  <p>Deutschland</p>
+                </address>
+              </section>
+              <section className="space-y-2">
+                <p>
+                  <span className="font-semibold">Kontakt:</span>{" "}
+                  <a
+                    href="mailto:support@phenohub.app"
+                    className="text-green-700 underline transition hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                  >
+                    support@phenohub.app
+                  </a>
+                </p>
+                <p>
+                  <span className="font-semibold">Telefon:</span> +49 (0)30 1234 5678
+                </p>
+                <p>
+                  <span className="font-semibold">USt-IdNr.:</span> DE&nbsp;123&nbsp;456&nbsp;789
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
+                  Verantwortlich für den Inhalt
+                </h3>
+                <p>
+                  Andrej Petri (Anschrift wie oben). Anfragen zu Inhalten oder Rechtsverstößen bitte an{" "}
+                  <a
+                    href="mailto:legal@phenohub.app"
+                    className="text-green-700 underline transition hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                  >
+                    legal@phenohub.app
+                  </a>
+                  .
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Haftungshinweise</h3>
+                <p>
+                  Trotz sorgfältiger Kontrolle übernehmen wir keine Haftung für externe Links. Für deren Inhalte
+                  sind ausschließlich die Betreiber verantwortlich.
+                </p>
+                <p>
+                  Alle Informationen auf PhenoHub dienen ausschließlich zu Dokumentations- und Recherchezwecken.
+                  Nutzer müssen geltende Gesetze beachten.
+                </p>
+              </section>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Stand: Oktober 2025</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {isPrivacyOpen && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="privacy-title"
+        >
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-green-100 bg-white/95 p-6 shadow-2xl shadow-green-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-900/60">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <p className="inline-flex items-center rounded-full border border-green-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-green-700 dark:border-sky-500/60 dark:text-sky-200">
+                  Datenschutz
+                </p>
+                <h2 id="privacy-title" className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
+                  Datenschutzerklärung
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPrivacyOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                aria-label="Datenschutzerklärung schließen"
+              >
+                ×
+              </button>
+            </div>
+            <div className="mt-6 space-y-6 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
+              <section>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">1. Verantwortlicher</h3>
+                <p>
+                  Andrej Petri, Straße des 17. Juni 12, 10623 Berlin, Deutschland. Kontakt:{" "}
+                  <a
+                    href="mailto:privacy@phenohub.app"
+                    className="text-green-700 underline transition hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                  >
+                    privacy@phenohub.app
+                  </a>
+                  .
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">2. Verarbeitete Daten</h3>
+                <ul className="list-disc space-y-1 pl-5">
+                  <li>Account-Daten (E-Mail, Benutzername, Rollenstatus, optionale Profildetails)</li>
+                  <li>Nutzungsdaten (Server-Logs, IP-Adresse, Interaktionen mit Berichten und Kommentaren)</li>
+                  <li>Inhaltsdaten (hochgeladene Bilder, Bewertungen, Community-Beiträge)</li>
+                  <li>Zahlungsdaten über Stripe (Bestell-ID, Rechnungsstatus, keine vollständigen Zahlungsdetails)</li>
+                </ul>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">3. Zwecke & Rechtsgrundlagen</h3>
+                <p>
+                  Betrieb und Verbesserung (Art. 6 Abs. 1 lit. b DSGVO), berechtigte Interessen (lit. f),
+                  gesetzliche Pflichten (lit. c) sowie Einwilligungen (lit. a) für Newsletter und Supporter-Infos.
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">4. Empfänger</h3>
+                <p>
+                  Hosting (Render, Supabase), E-Mail (Resend) und Zahlungsabwicklung (Stripe). Auftragsverarbeitungsverträge
+                  nach Art. 28 DSGVO sind abgeschlossen.
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">5. Speicherdauer</h3>
+                <p>
+                  Speicherung nur solange wie nötig oder gesetzlich geboten. Kontolöschung auf Anfrage via{" "}
+                  <a
+                    href="mailto:privacy@phenohub.app"
+                    className="text-green-700 underline transition hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                  >
+                    privacy@phenohub.app
+                  </a>
+                  .
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">6. Rechte</h3>
+                <p>
+                  Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch. Beschwerden
+                  bei Aufsichtsbehörden möglich.
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">7. Cookies & Tracking</h3>
+                <p>
+                  Notwendige Cookies sowie optionale Analyse-Tools (z.&nbsp;B. Plausible) nur mit Einwilligung; IPs werden anonymisiert.
+                </p>
+              </section>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Stand: Oktober 2025</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {isTermsOpen && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="terms-title"
+        >
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-green-100 bg-white/95 p-6 shadow-2xl shadow-green-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-900/60">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <p className="inline-flex items-center rounded-full border border-green-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-green-700 dark:border-sky-500/60 dark:text-sky-200">
+                  Nutzungsbedingungen
+                </p>
+                <h2 id="terms-title" className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
+                  Allgemeine Geschäfts- und Nutzungsbedingungen
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTermsOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                aria-label="Nutzungsbedingungen schließen"
+              >
+                ×
+              </button>
+            </div>
+            <div className="mt-6 space-y-6 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
+              <section>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">1. Geltungsbereich</h3>
+                <p>
+                  Diese Bedingungen gelten für alle Nutzer der Plattform. Mit Nutzung von PhenoHub stimmst du ihnen zu.
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">2. Registrierung & Account</h3>
+                <p>
+                  Für Berichte, Kommentare und Supporter-Abos ist ein Account erforderlich. Halte deine Zugangsdaten geheim und informiere uns bei Missbrauch.
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">3. Nutzerinhalte</h3>
+                <p>
+                  Lade nur Inhalte hoch, an denen du die Rechte besitzt. Du gewährst PhenoHub ein einfaches Nutzungsrecht zur Darstellung und Archivierung. Unzulässig sind diskriminierende, strafbare oder urheberrechtsverletzende Beiträge.
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">4. Supporter-Abos</h3>
+                <p>
+                  Supporter-Abos werden über Stripe verwaltet, verlängern sich monatlich und sind jederzeit kündbar. Gesetzliche Widerrufsrechte bleiben bestehen.
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">5. Haftung</h3>
+                <p>
+                  Inhalte werden ohne Gewähr bereitgestellt. Wir haften nicht für Richtigkeit oder Vollständigkeit. Anbauentscheidungen triffst du eigenverantwortlich.
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">6. Kündigung & Sperrung</h3>
+                <p>
+                  Wir können Accounts bei Verstößen sperren oder löschen. Du kannst deinen Account jederzeit löschen lassen.
+                </p>
+              </section>
+              <section className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">7. Änderungen</h3>
+                <p>
+                  Wir behalten uns Anpassungen vor und informieren über wesentliche Änderungen. Die aktuelle Fassung steht immer hier bereit.
+                </p>
+              </section>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Stand: Oktober 2025</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

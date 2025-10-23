@@ -4,6 +4,8 @@ import type { Seed } from "@/types/domain";
 export type HighlightSeedConfig = {
   showSeeds: boolean;
   showSupportCTA: boolean;
+  showCommunityFeedback: boolean;
+  showCommunityNav: boolean;
   plannedNotes: string;
   seeds: Seed[];
 };
@@ -13,6 +15,8 @@ const HIGHLIGHT_SEEDS_KEY = "highlight-seeds";
 const DEFAULT_SEED_CONFIG: HighlightSeedConfig = {
   showSeeds: true,
   showSupportCTA: true,
+  showCommunityFeedback: true,
+  showCommunityNav: true,
   plannedNotes: "",
   seeds: [],
 };
@@ -100,6 +104,14 @@ export const normalizeHighlightSeedConfig = (value: unknown): HighlightSeedConfi
     typeof record.showSupportCTA === "boolean"
       ? record.showSupportCTA
       : DEFAULT_SEED_CONFIG.showSupportCTA;
+  const showCommunityFeedback =
+    typeof record.showCommunityFeedback === "boolean"
+      ? record.showCommunityFeedback
+      : DEFAULT_SEED_CONFIG.showCommunityFeedback;
+  const showCommunityNav =
+    typeof record.showCommunityNav === "boolean"
+      ? record.showCommunityNav
+      : DEFAULT_SEED_CONFIG.showCommunityNav;
   const plannedNotes =
     typeof record.plannedNotes === "string" ? record.plannedNotes : DEFAULT_SEED_CONFIG.plannedNotes;
 
@@ -109,6 +121,8 @@ export const normalizeHighlightSeedConfig = (value: unknown): HighlightSeedConfi
   return {
     showSeeds,
     showSupportCTA,
+    showCommunityFeedback,
+    showCommunityNav,
     plannedNotes,
     seeds,
   };
@@ -146,6 +160,16 @@ export const saveHighlightSeedConfig = async (
       typeof config.showSupportCTA === "boolean"
         ? config.showSupportCTA
         : DEFAULT_SEED_CONFIG.showSupportCTA,
+    ),
+    showCommunityFeedback: Boolean(
+      typeof config.showCommunityFeedback === "boolean"
+        ? config.showCommunityFeedback
+        : DEFAULT_SEED_CONFIG.showCommunityFeedback,
+    ),
+    showCommunityNav: Boolean(
+      typeof config.showCommunityNav === "boolean"
+        ? config.showCommunityNav
+        : DEFAULT_SEED_CONFIG.showCommunityNav,
     ),
     plannedNotes:
       typeof config.plannedNotes === "string" ? config.plannedNotes.trim() : DEFAULT_SEED_CONFIG.plannedNotes,

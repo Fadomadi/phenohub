@@ -7,6 +7,8 @@ async function run() {
       value: {
         showSeeds: true,
         showSupportCTA: true,
+        showCommunityFeedback: true,
+        showCommunityNav: true,
         plannedNotes: "",
         seeds: [],
       },
@@ -16,6 +18,8 @@ async function run() {
       value: {
         showSeeds: true,
         showSupportCTA: true,
+        showCommunityFeedback: true,
+        showCommunityNav: true,
         plannedNotes: "",
         seeds: [],
       },

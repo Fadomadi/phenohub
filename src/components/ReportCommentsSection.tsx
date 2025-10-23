@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Trash2 } from "lucide-react";
 import type { ReportComment } from "@/types/domain";
@@ -31,6 +32,8 @@ const ReportCommentsSection = ({
   canComment,
 }: ReportCommentsSectionProps) => {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
   const [comments, setComments] = useState<ReportComment[]>(initialComments);
   const [commentText, setCommentText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +47,8 @@ const ReportCommentsSection = ({
     event.preventDefault();
     if (!canComment || status !== "authenticated") {
       setError("Bitte melde dich an, um zu kommentieren.");
+      const callbackUrl = encodeURIComponent(pathname ?? "/");
+      router.push(`/login?callbackUrl=${callbackUrl}`);
       return;
     }
     if (!commentText.trim()) {
@@ -60,6 +65,12 @@ const ReportCommentsSection = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ body: commentText }),
         });
+        if (response.status === 401) {
+          setError("Bitte melde dich an, um zu kommentieren.");
+          const callbackUrl = encodeURIComponent(pathname ?? "/");
+          router.push(`/login?callbackUrl=${callbackUrl}`);
+          return;
+        }
         let result: unknown = null;
         try {
           result = await response.json();

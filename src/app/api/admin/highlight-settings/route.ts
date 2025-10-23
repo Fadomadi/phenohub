@@ -35,6 +35,8 @@ export async function GET() {
 type UpdatePayload = {
   showSeeds?: unknown;
   showSupportCTA?: unknown;
+  showCommunityFeedback?: unknown;
+  showCommunityNav?: unknown;
   plannedNotes?: unknown;
   seeds?: unknown;
 };
@@ -55,6 +57,8 @@ export async function PUT(request: Request) {
   const rawConfig = {
     showSeeds: payload.showSeeds,
     showSupportCTA: payload.showSupportCTA,
+    showCommunityFeedback: payload.showCommunityFeedback,
+    showCommunityNav: payload.showCommunityNav,
     plannedNotes: payload.plannedNotes,
     seeds: Array.isArray(payload.seeds) ? payload.seeds : [],
   };

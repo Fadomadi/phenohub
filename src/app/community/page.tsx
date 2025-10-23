@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   ArrowLeft,
   MessageCircle,
@@ -105,11 +107,45 @@ const initialThreads: Thread[] = [
 ];
 
 const CommunityPage = () => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const loginHref = useMemo(
+    () => `/login?callbackUrl=${encodeURIComponent(pathname ?? "/community")}`,
+    [pathname],
+  );
+  const registerHref = useMemo(
+    () => `/register?callbackUrl=${encodeURIComponent(pathname ?? "/community")}`,
+    [pathname],
+  );
+  const isAuthenticated = status === "authenticated" && Boolean(session?.user);
+  const userRole = (session?.user as { role?: string | null } | undefined)?.role ?? null;
+  const isOwner = userRole === "OWNER";
+  const sessionUser = session?.user as
+    | { username?: string | null; name?: string | null; email?: string | null }
+    | undefined;
+  const resolvedHandle = useMemo(() => {
+    if (!sessionUser) return "Community";
+    const handle =
+      sessionUser.username?.trim() ?? sessionUser.name?.trim() ?? sessionUser.email?.split("@")[0] ?? "Community";
+    return handle.replace(/^@/, "");
+  }, [sessionUser]);
+
+  const redirectToLogin = useCallback(() => {
+    router.push(loginHref);
+  }, [loginHref, router]);
+
+  const handleSignOut = useCallback(() => {
+    void signOut({ callbackUrl: pathname ?? "/community" });
+  }, [pathname]);
+
   const [threads, setThreads] = useState<Thread[]>(initialThreads);
+  const [nextThreadId, setNextThreadId] = useState<number>(initialThreads.length + 1);
   const [selectedFlair, setSelectedFlair] = useState<Flair>("Alle");
   const [title, setTitle] = useState("");
   const [flair, setFlair] = useState<Exclude<Flair, "Alle">>("Diskussion");
   const [content, setContent] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
   const [threadComments, setThreadComments] = useState<Record<number, string[]>>({});
 
@@ -118,16 +154,22 @@ const CommunityPage = () => {
     return threads.filter((thread) => thread.flair === selectedFlair);
   }, [selectedFlair, threads]);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!title.trim() || !content.trim()) return;
 
+    if (!isAuthenticated) {
+      setFormError("Bitte melde dich an, um einen neuen Community-Beitrag zu erstellen.");
+      redirectToLogin();
+      return;
+    }
+
     const newThread: Thread = {
-      id: threads.length + 1,
+      id: nextThreadId,
       title: title.trim(),
       content: content.trim(),
       flair,
-      author: "@me",
+      author: `@${resolvedHandle}`,
       createdAt: new Date().toISOString(),
       replies: 0,
       likes: 0,
@@ -135,32 +177,92 @@ const CommunityPage = () => {
 
     setThreads((prev) => [newThread, ...prev]);
     setThreadComments((prev) => ({ ...prev, [newThread.id]: [] }));
+    setNextThreadId((prev) => prev + 1);
     setTitle("");
     setContent("");
     setFlair("Diskussion");
     setSelectedFlair("Alle");
-  };
+    setFormError(null);
+  }, [
+    content,
+    flair,
+    isAuthenticated,
+    nextThreadId,
+    redirectToLogin,
+    resolvedHandle,
+    title,
+  ]);
 
-  const handleAddComment = (threadId: number, comment: string) => {
-    setThreadComments((prev) => {
-      const existing = prev[threadId] ?? [];
-      return { ...prev, [threadId]: [...existing, comment] };
-    });
-    setThreads((prev) => {
-      const updated = prev.map((thread) =>
-        thread.id === threadId
-          ? { ...thread, replies: thread.replies + 1 }
-          : thread,
-      );
-      if (activeThread && activeThread.id === threadId) {
-        const refreshed = updated.find((thread) => thread.id === threadId);
-        if (refreshed) {
-          setActiveThread(refreshed);
-        }
+  const handleAddComment = useCallback(
+    (threadId: number, comment: string): boolean => {
+      if (!isAuthenticated) {
+        redirectToLogin();
+        return false;
       }
-      return updated;
-    });
-  };
+
+      const commentWithAuthor = `@${resolvedHandle}: ${comment}`;
+      setThreadComments((prev) => {
+        const existing = prev[threadId] ?? [];
+        return { ...prev, [threadId]: [...existing, commentWithAuthor] };
+      });
+
+      let updatedThread: Thread | null = null;
+      setThreads((prev) =>
+        prev.map((thread) => {
+          if (thread.id !== threadId) return thread;
+          updatedThread = { ...thread, replies: thread.replies + 1 };
+          return updatedThread;
+        }),
+      );
+
+      if (updatedThread) {
+        setActiveThread((current) => (current && current.id === threadId ? updatedThread : current));
+      }
+
+      return true;
+    },
+    [isAuthenticated, redirectToLogin, resolvedHandle],
+  );
+
+  const handleDeleteThreadComment = useCallback(
+    (threadId: number, commentIndex: number) => {
+      if (!isOwner) return;
+
+      setThreadComments((prev) => {
+        const existing = prev[threadId] ?? [];
+        const next = existing.filter((_, index) => index !== commentIndex);
+        return { ...prev, [threadId]: next };
+      });
+
+      let updatedThread: Thread | null = null;
+      setThreads((prev) =>
+        prev.map((thread) => {
+          if (thread.id !== threadId) return thread;
+          updatedThread = { ...thread, replies: Math.max(0, thread.replies - 1) };
+          return updatedThread;
+        }),
+      );
+
+      if (updatedThread) {
+        setActiveThread((current) => (current && current.id === threadId ? updatedThread : current));
+      }
+    },
+    [isOwner],
+  );
+
+  const handleDeleteThread = useCallback(
+    (threadId: number) => {
+      if (!isOwner) return;
+      setThreads((prev) => prev.filter((thread) => thread.id !== threadId));
+      setThreadComments((prev) => {
+        const next = { ...prev };
+        delete next[threadId];
+        return next;
+      });
+      setActiveThread((current) => (current && current.id === threadId ? null : current));
+    },
+    [isOwner],
+  );
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -183,7 +285,7 @@ const CommunityPage = () => {
           >
             🌱 PhenoHub
           </Link>
-          <nav className="flex items-center gap-3 text-sm font-medium text-gray-600">
+          <nav className="flex flex-wrap items-center gap-3 text-sm font-medium text-gray-600">
             <Link
               href="/"
               className="rounded-lg px-3 py-1 transition hover:bg-green-50 hover:text-green-800"
@@ -193,12 +295,46 @@ const CommunityPage = () => {
             <span className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-green-50 via-white to-green-100 px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm">
               💬 Community
             </span>
-            <Link
-              href="/login"
-              className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
-            >
-              Anmelden / Registrieren
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <span className="hidden text-xs text-gray-500 md:inline">
+                  @{resolvedHandle}
+                </span>
+                <Link
+                  href="/settings"
+                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                >
+                  Profil
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="rounded-xl border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2"
+                >
+                  Abmelden
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href={loginHref}
+                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                >
+                  Anmelden
+                </Link>
+                <Link
+                  href={registerHref}
+                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                >
+                  Registrieren
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -298,6 +434,15 @@ const CommunityPage = () => {
               />
             </div>
 
+            {formError && (
+              <p className="text-xs font-semibold text-rose-500">{formError}</p>
+            )}
+            {!isAuthenticated && !formError && (
+              <p className="text-xs text-gray-500">
+                Bitte melde dich an, um eigene Threads zu erstellen.
+              </p>
+            )}
+
             <div className="flex items-center justify-between">
               <Link
                 href="/"
@@ -355,14 +500,28 @@ const CommunityPage = () => {
                   role="button"
                   tabIndex={0}
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={flairClass}>
-                      <Tag className="h-3 w-3" />
-                      {thread.flair}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(thread.createdAt).toLocaleString("de-DE")}
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={flairClass}>
+                        <Tag className="h-3 w-3" />
+                        {thread.flair}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(thread.createdAt).toLocaleString("de-DE")}
+                      </span>
+                    </div>
+                    {isOwner && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteThread(thread.id);
+                        }}
+                        className="text-xs font-semibold text-rose-500 transition hover:text-rose-600"
+                      >
+                        Entfernen
+                      </button>
+                    )}
                   </div>
 
                   <h3 className="mt-3 text-lg font-semibold text-gray-900">
@@ -398,7 +557,10 @@ const CommunityPage = () => {
         <CommunityThreadModal
           thread={activeThread}
           comments={threadComments[activeThread.id] ?? []}
+          canComment={isAuthenticated}
+          canModerate={isOwner}
           onAddComment={handleAddComment}
+          onDeleteComment={handleDeleteThreadComment}
           onClose={() => setActiveThread(null)}
         />
       )}

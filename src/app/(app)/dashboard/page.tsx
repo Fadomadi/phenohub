@@ -48,6 +48,8 @@ const STATUS_OPTIONS = ["ACTIVE", "INVITED", "SUSPENDED"];
 type HighlightSeedConfig = {
   showSeeds: boolean;
   showSupportCTA: boolean;
+  showCommunityFeedback: boolean;
+  showCommunityNav: boolean;
   plannedNotes: string;
   seeds: Seed[];
 };
@@ -198,6 +200,10 @@ const DashboardPage = () => {
           showSeeds: Boolean(config.showSeeds),
           showSupportCTA:
             typeof config.showSupportCTA === "boolean" ? config.showSupportCTA : true,
+          showCommunityFeedback:
+            typeof config.showCommunityFeedback === "boolean" ? config.showCommunityFeedback : true,
+          showCommunityNav:
+            typeof config.showCommunityNav === "boolean" ? config.showCommunityNav : true,
           plannedNotes:
             typeof config.plannedNotes === "string" ? config.plannedNotes : "",
           seeds: Array.isArray(config.seeds) ? config.seeds : [],
@@ -206,6 +212,8 @@ const DashboardPage = () => {
         setHighlightSettings({
           showSeeds: true,
           showSupportCTA: true,
+          showCommunityFeedback: true,
+          showCommunityNav: true,
           plannedNotes: "",
           seeds: [],
         });
@@ -219,6 +227,8 @@ const DashboardPage = () => {
       setHighlightSettings({
         showSeeds: true,
         showSupportCTA: true,
+        showCommunityFeedback: true,
+        showCommunityNav: true,
         plannedNotes: "",
         seeds: [],
       });
@@ -461,6 +471,20 @@ const DashboardPage = () => {
     });
   }, []);
 
+  const handleCommunityNavToggle = useCallback((next: boolean) => {
+    setHighlightSettings((previous) => {
+      if (!previous) return previous;
+      return { ...previous, showCommunityNav: next };
+    });
+  }, []);
+
+  const handleCommunityFeedbackToggle = useCallback((next: boolean) => {
+    setHighlightSettings((previous) => {
+      if (!previous) return previous;
+      return { ...previous, showCommunityFeedback: next };
+    });
+  }, []);
+
   const handlePlannedNotesChange = useCallback((value: string) => {
     setHighlightSettings((previous) => {
       if (!previous) return previous;
@@ -575,6 +599,10 @@ const DashboardPage = () => {
           showSeeds: Boolean(config.showSeeds),
           showSupportCTA:
             typeof config.showSupportCTA === "boolean" ? config.showSupportCTA : true,
+          showCommunityFeedback:
+            typeof config.showCommunityFeedback === "boolean" ? config.showCommunityFeedback : true,
+          showCommunityNav:
+            typeof config.showCommunityNav === "boolean" ? config.showCommunityNav : true,
           plannedNotes: typeof config.plannedNotes === "string" ? config.plannedNotes : "",
           seeds: Array.isArray(config.seeds) ? config.seeds : [],
         });
@@ -856,6 +884,41 @@ const DashboardPage = () => {
                 <span className="text-xs text-gray-500">
                   Schaltet den Button „Du möchtest PhenoHub unterstützen?“ ein oder aus. Damit kannst du
                   die Supporter-Box bei Bedarf für Besucher ausblenden.
+                </span>
+              </label>
+
+              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-gray-800">
+                    Community-Tab im Header anzeigen
+                  </span>
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    checked={highlightSettings.showCommunityNav}
+                    onChange={(event) => handleCommunityNavToggle(event.target.checked)}
+                  />
+                </div>
+                <span className="text-xs text-gray-500">
+                  Entfernt den „💬 Community“-Link aus der Navigation, wenn du die Community-Seite temporär
+                  ausblenden möchtest.
+                </span>
+              </label>
+
+              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-gray-800">
+                    Community-Feedback auf der Startseite anzeigen
+                  </span>
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    checked={highlightSettings.showCommunityFeedback}
+                    onChange={(event) => handleCommunityFeedbackToggle(event.target.checked)}
+                  />
+                </div>
+                <span className="text-xs text-gray-500">
+                  Blendet die Box „Was wir als Nächstes angehen“ inklusive Community-Kommentare für Besucher ein oder aus.
                 </span>
               </label>
 

@@ -393,14 +393,19 @@ export async function GET() {
   let seeds = mockSeeds.slice(0, TAKE).map(mapSeed);
   let supportCtaEnabled = true;
   let plannedNotes = "";
+  let showCommunityFeedback = true;
+  let showCommunityNav = true;
 
   try {
     const seedConfig = await getHighlightSeedConfig(prisma);
     seedsEnabled = Boolean(seedConfig.showSeeds);
     supportCtaEnabled =
       typeof seedConfig.showSupportCTA === "boolean" ? seedConfig.showSupportCTA : true;
-    plannedNotes =
-      typeof seedConfig.plannedNotes === "string" ? seedConfig.plannedNotes : "";
+    plannedNotes = typeof seedConfig.plannedNotes === "string" ? seedConfig.plannedNotes : "";
+    showCommunityFeedback =
+      typeof seedConfig.showCommunityFeedback === "boolean" ? seedConfig.showCommunityFeedback : true;
+    showCommunityNav =
+      typeof seedConfig.showCommunityNav === "boolean" ? seedConfig.showCommunityNav : true;
     if (seedsEnabled) {
       seeds =
         seedConfig.seeds.length > 0
@@ -425,6 +430,8 @@ export async function GET() {
     seeds,
     seedsEnabled,
     supportCtaEnabled,
+    showCommunityFeedback,
+    showCommunityNav,
     plannedNotes,
   });
 }

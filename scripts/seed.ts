@@ -359,8 +359,8 @@ async function main() {
       ? (() => {
           try {
             return JSON.parse(offering.terpenesJson!);
-          } catch (_error) {
-            console.warn("[SEED] Invalid terpene JSON for", offering.cultivar);
+          } catch (error) {
+            console.warn("[SEED] Invalid terpene JSON for", offering.cultivar, error);
             return null;
           }
         })()
@@ -449,6 +449,8 @@ async function main() {
       value: {
         showSeeds: true,
         showSupportCTA: true,
+        showCommunityFeedback: true,
+        showCommunityNav: true,
         plannedNotes: "",
         seeds: [],
       },
@@ -458,6 +460,8 @@ async function main() {
       value: {
         showSeeds: true,
         showSupportCTA: true,
+        showCommunityFeedback: true,
+        showCommunityNav: true,
         plannedNotes: "",
         seeds: [],
       },

@@ -17,27 +17,43 @@ export type CommunityThread = {
 type CommunityThreadModalProps = {
   thread: CommunityThread;
   comments: string[];
-  onAddComment: (threadId: number, comment: string) => void;
+  canComment: boolean;
+  canModerate?: boolean;
+  onAddComment: (threadId: number, comment: string) => boolean;
+  onDeleteComment?: (threadId: number, commentIndex: number) => void;
   onClose: () => void;
 };
 
 const CommunityThreadModal = ({
   thread,
   comments,
+  canComment,
+  canModerate = false,
   onAddComment,
+  onDeleteComment,
   onClose,
 }: CommunityThreadModalProps) => {
   const [commentText, setCommentText] = useState("");
   const [status, setStatus] = useState<"idle" | "success">("idle");
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!canComment) {
+      setError("Bitte melde dich an, um zu kommentieren.");
+      return;
+    }
     const trimmed = commentText.trim();
     if (!trimmed) return;
-    onAddComment(thread.id, trimmed);
+    const success = onAddComment(thread.id, trimmed);
+    if (!success) {
+      setError("Bitte melde dich an, um zu kommentieren.");
+      return;
+    }
     setCommentText("");
     setStatus("success");
     setTimeout(() => setStatus("idle"), 1800);
+    setError(null);
   };
 
   const flairClass =
@@ -106,9 +122,20 @@ const CommunityThreadModal = ({
                   {comments.map((comment, index) => (
                     <li
                       key={`${thread.id}-comment-${index}`}
-                      className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
+                      className="flex items-start justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
                     >
-                      {comment}
+                      <span className="flex-1 whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                        {comment}
+                      </span>
+                      {canModerate && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteComment?.(thread.id, index)}
+                          className="text-xs font-semibold text-rose-500 transition hover:text-rose-600"
+                        >
+                          Entfernen
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -127,16 +154,23 @@ const CommunityThreadModal = ({
                 rows={4}
                 placeholder="Teile deine Erfahrungen, Tipps oder Fragen …"
                 className="w-full rounded-2xl border border-green-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-800 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
+                disabled={!canComment}
               />
               <button
                 type="submit"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-green-400"
-                disabled={!commentText.trim()}
+                disabled={!commentText.trim() || !canComment}
               >
                 <MessageCircle className="h-4 w-4" />
                 Kommentar posten
               </button>
             </form>
+            {!canComment && (
+              <p className="text-xs font-medium text-emerald-900/80">
+                Bitte melde dich an, um Kommentare zu schreiben.
+              </p>
+            )}
+            {error && <p className="text-xs font-medium text-rose-500">{error}</p>}
             {status === "success" && (
               <p className="text-xs font-medium text-green-700">
                 Danke für deinen Beitrag! Er wurde hinzugefügt.
