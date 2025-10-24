@@ -1501,35 +1501,35 @@ const StecklingsIndex = () => {
         </section>
       )}
 
-      <section className="mt-8 border-t border-amber-200 bg-amber-50 dark:border-slate-800 dark:bg-slate-950/80">
+      <section className="mt-8 border-t border-amber-200 bg-gradient-to-br from-amber-50 via-amber-100 to-amber-50/90 dark:border-slate-800 dark:bg-[rgba(6,11,23,0.85)]">
         <div className="mx-auto max-w-7xl px-4 py-8">
-          <div className="flex gap-3">
-            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-700 dark:text-sky-300" />
+          <div className="flex items-start gap-3 rounded-3xl bg-amber-50/90 p-6 shadow-[0_12px_35px_rgba(245,158,11,0.18)] ring-1 ring-amber-100 dark:bg-transparent dark:shadow-none dark:ring-0">
+            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-sky-300" />
             <div>
-              <p className="mb-3 text-gray-800 dark:text-slate-200">
+              <p className="mb-3 text-amber-900 dark:text-slate-200">
                 Diese Plattform dient ausschließlich der Dokumentation und
                 Recherche. Kein Verkauf, keine Vermittlung. Inhalte stammen von
                 Nutzern. Bitte beachte lokale Gesetze.
               </p>
-              <div className="flex gap-4 text-sm text-gray-600 dark:text-slate-300">
+              <div className="flex flex-wrap gap-4 text-sm text-amber-800/90 dark:text-slate-300">
                 <button
                   type="button"
                   onClick={() => setImprintOpen(true)}
-                  className="text-green-700 underline transition-colors hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
+                  className="text-amber-700 underline transition-colors hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
                 >
                   Impressum
                 </button>
                 <button
                   type="button"
                   onClick={() => setPrivacyOpen(true)}
-                  className="text-green-700 underline transition-colors hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
+                  className="text-amber-700 underline transition-colors hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
                 >
                   Datenschutz
                 </button>
                 <button
                   type="button"
                   onClick={() => setTermsOpen(true)}
-                  className="text-green-700 underline transition-colors hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
+                  className="text-amber-700 underline transition-colors hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
                 >
                   Nutzungsbedingungen
                 </button>
