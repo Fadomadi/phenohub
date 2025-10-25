@@ -1,6 +1,6 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -23,6 +23,8 @@ const ReportImageEntry = ({ item }: { item: ReportImageStackItem }) => {
 
   const sources = useMemo(() => item.sources.filter(Boolean), [item.sources]);
   const currentSource = sources[sourceIndex] ?? sources[0] ?? "";
+  const isPriority = loading === "eager";
+  const resolvedLoading = isPriority ? undefined : "lazy";
 
   const handleError = useCallback(() => {
     setSourceIndex((previous) => {
@@ -38,15 +40,18 @@ const ReportImageEntry = ({ item }: { item: ReportImageStackItem }) => {
   }
 
   return (
-    <figure className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-100/80 shadow-sm ring-1 ring-white/40 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-green-200 dark:bg-slate-950/60 dark:ring-slate-800">
+    <figure className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-100/80 shadow-sm ring-1 ring-white/40 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-green-200 theme-dark:bg-slate-950/60 theme-dark:ring-slate-800">
       <div className="group block h-full w-full cursor-zoom-in">
         <div className="relative h-full w-full">
-          <img
+          <Image
             src={currentSource}
             alt={alt}
-            className="absolute inset-0 h-full w-full object-contain transition duration-200 group-hover:scale-105"
-            loading={loading === "eager" ? "eager" : "lazy"}
-            onError={handleError}
+            fill
+            className="object-contain transition duration-200 group-hover:scale-105"
+            sizes="(min-width: 1280px) 18vw, (min-width: 768px) 30vw, 45vw"
+            priority={isPriority}
+            loading={resolvedLoading}
+            onError={() => handleError()}
           />
         </div>
       </div>
@@ -174,13 +179,17 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
 
       <div className="w-full max-w-[92vw] space-y-4 md:space-y-5 lg:max-w-5xl">
         <div className="flex max-h-[82vh] items-center justify-center overflow-hidden rounded-3xl border border-white/30 bg-black/30 backdrop-blur">
-          <img
-            src={modalSource}
-            alt={activeItem.alt}
-            className="max-h-[82vh] w-auto max-w-full object-contain"
-            loading="eager"
-            onError={handleModalError}
-          />
+          <div className="relative h-[58vh] w-full max-h-[78vh]">
+            <Image
+              src={modalSource}
+              alt={activeItem.alt}
+              fill
+              className="object-contain"
+              sizes="(min-width: 1280px) 70vw, 90vw"
+              priority
+              onError={() => handleModalError()}
+            />
+          </div>
         </div>
         <div className="flex items-center justify-between gap-3 text-sm text-white/80">
           <span className="truncate">{activeItem.alt}</span>
@@ -199,12 +208,16 @@ const ReportImageStack = ({ items, className }: ReportImageStackProps) => {
                 className={`relative h-20 overflow-hidden rounded-xl border ${index === activeIndex ? "border-green-400 ring-2 ring-green-300" : "border-white/30"}`}
                 aria-label={`${item.alt} auswählen`}
               >
-                <img
-                  src={item.sources[0]}
-                  alt={item.alt}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
+                <div className="relative h-full w-full">
+                  <Image
+                    src={item.sources[0]}
+                    alt={item.alt}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                    loading="lazy"
+                  />
+                </div>
               </button>
             ))}
           </div>

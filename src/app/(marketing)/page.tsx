@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -18,13 +19,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 import ReportCard from "@/components/ReportCard";
-import ReportSubmissionPanel from "@/components/ReportSubmissionPanel";
-import CultivarPreviewModal from "@/components/CultivarPreviewModal";
-import AboutModal from "@/components/AboutModal";
-import ReportsHighlightsModal from "@/components/ReportsHighlightsModal";
-import CultivarHighlightsModal from "@/components/CultivarHighlightsModal";
-import ProviderHighlightsModal from "@/components/ProviderHighlightsModal";
-import SeedHighlightsModal from "@/components/SeedHighlightsModal";
 import ThumbnailCell from "@/components/ThumbnailCell";
 import type { Cultivar, Provider, Report, Seed } from "@/types/domain";
 
@@ -73,6 +67,41 @@ const filters: { key: SearchFilter; label: string }[] = [
   { key: "providers", label: "Anbieter" },
   { key: "reports", label: "Berichte" },
 ];
+
+const ReportSubmissionPanel = dynamic(
+  () => import("@/components/ReportSubmissionPanel"),
+  { ssr: false, loading: () => null },
+);
+
+const CultivarPreviewModal = dynamic(
+  () => import("@/components/CultivarPreviewModal"),
+  { ssr: false, loading: () => null },
+);
+
+const AboutModal = dynamic(
+  () => import("@/components/AboutModal"),
+  { ssr: false, loading: () => null },
+);
+
+const ReportsHighlightsModal = dynamic(
+  () => import("@/components/ReportsHighlightsModal"),
+  { ssr: false, loading: () => null },
+);
+
+const CultivarHighlightsModal = dynamic(
+  () => import("@/components/CultivarHighlightsModal"),
+  { ssr: false, loading: () => null },
+);
+
+const ProviderHighlightsModal = dynamic(
+  () => import("@/components/ProviderHighlightsModal"),
+  { ssr: false, loading: () => null },
+);
+
+const SeedHighlightsModal = dynamic(
+  () => import("@/components/SeedHighlightsModal"),
+  { ssr: false, loading: () => null },
+);
 
 const StecklingsIndex = () => {
   const { data: session, status: sessionStatus } = useSession();
@@ -145,15 +174,15 @@ const StecklingsIndex = () => {
         (offerings ?? []).filter((offering) => offering.providerName).slice(0, 2);
       if (displayOfferings.length === 0) return null;
       return (
-        <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-gray-500 dark:text-slate-400">
+        <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-gray-500 theme-dark:text-slate-400">
           {displayOfferings.map((offering) => {
             const priceLabel = formatPrice(offering.priceEur);
             return (
               <span
                 key={`${offering.providerSlug ?? offering.providerName}`}
-                className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-600 dark:bg-slate-800 dark:text-slate-300"
+                className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-600 theme-dark:bg-slate-800 theme-dark:text-slate-300"
               >
-                <Building2 className="h-3 w-3 text-green-600 dark:text-sky-300" />
+                <Building2 className="h-3 w-3 text-green-600 theme-dark:text-sky-300" />
                 <span className="font-semibold">{offering.providerName}</span>
                 {priceLabel && (
                   <>
@@ -699,20 +728,21 @@ const StecklingsIndex = () => {
   );
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-green-50 via-white to-green-50 dark:bg-gradient-to-b dark:from-slate-950 dark:via-slate-950 dark:to-slate-950">
-      <header className="sticky top-0 z-50 border-b bg-white/90 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-900/60">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-green-50 via-white to-green-50 theme-dark:bg-gradient-to-b theme-dark:from-slate-950 theme-dark:via-slate-950 theme-dark:to-slate-950">
+      <header className="sticky top-0 z-50 border-b bg-white/90 shadow-sm backdrop-blur-md theme-dark:border-slate-800 theme-dark:bg-slate-900/70 theme-dark:shadow-slate-900/60">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
           <Link
             href="/"
-            className="flex items-center gap-2 text-2xl font-bold text-green-700 transition-colors hover:text-green-800 dark:text-sky-200 dark:hover:text-sky-100"
+            className="flex items-center gap-2 text-3xl font-bold text-emerald-600 transition-colors hover:text-emerald-500 theme-dark:text-sky-300 theme-dark:hover:text-sky-200 sm:text-3xl md:text-[40px]"
           >
-            🌱 PhenoHub
+            <span className="text-[30px] sm:text-[34px] md:text-[40px] drop-shadow-[0_4px_12px_rgba(16,185,129,0.35)]">🌱</span>
+            <span className="text-xl font-semibold text-emerald-700 theme-dark:text-sky-100 sm:text-2xl md:text-3xl">PhenoHub</span>
           </Link>
           <nav className="flex flex-wrap items-center justify-end gap-2 text-sm">
             {communityNavEnabled && (
               <Link
                 href="/community"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-green-50 via-white to-green-100 px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:from-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 dark:border dark:border-slate-800 dark:bg-slate-900/80 dark:text-sky-200 dark:hover:bg-slate-800 dark:hover:text-sky-100"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-green-50 via-white to-green-100 px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:from-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 theme-dark:border theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:text-sky-200 theme-dark:hover:bg-slate-800 theme-dark:hover:text-sky-100"
               >
                 💬 Community
               </Link>
@@ -721,49 +751,41 @@ const StecklingsIndex = () => {
             {isAuthenticated ? (
               <>
                 {userHandle && (
-                  <span className="hidden text-xs text-gray-500 md:inline dark:text-slate-300">
+                  <span className="hidden text-xs text-gray-500 md:inline theme-dark:text-slate-300">
                     {userHandle}
                   </span>
                 )}
                 <Link
                   href="/settings"
-                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 dark:border-slate-800 dark:bg-slate-900/80 dark:text-sky-200 dark:hover:bg-slate-800"
+                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:text-sky-200 theme-dark:hover:bg-slate-800"
                 >
                   Profil
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 dark:border-slate-800 dark:bg-slate-900/80 dark:text-sky-200 dark:hover:bg-slate-800"
+                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:text-sky-200 theme-dark:hover:bg-slate-800"
                 >
                   Dashboard
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="rounded-xl border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 dark:border-red-500/60 dark:bg-slate-900/80 dark:text-red-300 dark:hover:bg-slate-800"
+                  className="rounded-xl border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 theme-dark:border-red-500/60 theme-dark:bg-slate-900/80 theme-dark:text-red-300 theme-dark:hover:bg-slate-800"
                 >
                   Abmelden
                 </button>
               </>
             ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 dark:border-slate-800 dark:bg-slate-900/80 dark:text-sky-200 dark:hover:bg-slate-800"
-                >
-                  Anmelden
-                </Link>
-                <Link
-                  href="/register"
-                  className="rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 dark:border-slate-800 dark:bg-slate-900/80 dark:text-sky-200 dark:hover:bg-slate-800"
-                >
-                  Registrieren
-                </Link>
-              </>
+              <Link
+                href={loginHref}
+                className="inline-flex items-center gap-2 rounded-xl border border-green-200 bg-white px-3 py-1.5 text-sm font-semibold text-green-700 shadow-sm transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:text-sky-200 theme-dark:hover:bg-slate-800"
+              >
+                <span>Anmelden / Registrieren</span>
+              </Link>
             )}
 
             <button
               onClick={() => setAboutOpen(true)}
-              className="inline-flex items-center rounded-xl bg-green-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 dark:bg-sky-500 dark:hover:bg-sky-400"
+              className="inline-flex items-center rounded-xl bg-green-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 theme-dark:bg-sky-500 theme-dark:hover:bg-sky-400"
             >
               Über PhenoHub
             </button>
@@ -772,25 +794,25 @@ const StecklingsIndex = () => {
       </header>
 
       <section className="mx-auto max-w-5xl px-4 pb-8 pt-10">
-        <div className="mb-8 text-center">
-          <h1 className="mb-4 text-5xl font-bold leading-tight text-green-700 md:text-6xl dark:text-sky-100">
+        <div className="mb-8 text-center sm:px-6">
+          <h1 className="mb-4 text-4xl font-bold leading-tight text-green-700 sm:text-5xl md:text-6xl theme-dark:text-sky-100">
             Endlich Schluss mit Suchen.
           </h1>
-          <p className="mb-4 text-2xl font-medium text-gray-700 dark:text-slate-200">
+          <p className="mb-4 text-xl font-medium text-gray-800 sm:text-2xl theme-dark:text-slate-200">
             Bevor dein Grow startet, weißt du schon, was dich erwartet.
           </p>
-          <p className="mx-auto max-w-2xl text-xl text-gray-600 dark:text-slate-300">
+          <p className="mx-auto max-w-2xl text-base text-gray-600 sm:text-xl theme-dark:text-slate-300">
             Vergleichsfotos, echte Erfahrungen und Bewertungen – alles an einem Ort.
           </p>
-          <p className="mx-auto max-w-2xl text-lg text-gray-600 dark:text-slate-300">
+          <p className="mx-auto max-w-2xl text-sm text-gray-600 sm:text-lg theme-dark:text-slate-300">
             Finde Sorten, Anbieter und Erfahrungen in Sekunden.
           </p>
         </div>
 
-        <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           <div className="relative flex-1">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
+              <Search className="absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-gray-400 theme-dark:text-slate-500" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -800,7 +822,7 @@ const StecklingsIndex = () => {
                   setSelectedIndex(-1);
                 }}
                 placeholder="Suche nach Sorte oder Anbieter – z. B. Amnesia Core Cut, Flowery Field..."
-                className="w-full rounded-2xl border-2 border-gray-200 py-5 pl-14 pr-4 text-lg text-gray-900 shadow-sm transition-all placeholder:text-gray-500 hover:shadow-md focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-100 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:placeholder:text-slate-400 dark:hover:shadow-lg dark:focus:border-sky-500 dark:focus:ring-sky-500/30"
+                className="w-full rounded-2xl border-2 border-gray-200 py-5 pl-14 pr-4 text-lg text-gray-900 shadow-sm transition-all placeholder:text-gray-500 hover:shadow-md focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-100 theme-dark:border-slate-700 theme-dark:bg-slate-900/70 theme-dark:text-slate-100 theme-dark:placeholder:text-slate-400 theme-dark:hover:shadow-lg theme-dark:focus:border-sky-500 theme-dark:focus:ring-sky-500/30"
                 aria-label="Suche"
                 role="combobox"
                 aria-expanded={Boolean(searchQuery)}
@@ -816,7 +838,7 @@ const StecklingsIndex = () => {
                     setActiveFilter(filter.key);
                     setSelectedIndex(-1);
                   }}
-                  className={`whitespace-nowrap rounded-xl px-5 py-2.5 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${activeFilter === filter.key ? "bg-green-600 text-white shadow-md dark:bg-sky-500" : "border-2 border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800"}`}
+                  className={`whitespace-nowrap rounded-xl px-5 py-2.5 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${activeFilter === filter.key ? "bg-green-600 text-white shadow-md theme-dark:bg-sky-500" : "border-2 border-gray-200 bg-white text-gray-700 hover:bg-gray-50 theme-dark:border-slate-700 theme-dark:bg-slate-900/70 theme-dark:text-slate-200 theme-dark:hover:bg-slate-800"}`}
                   aria-pressed={activeFilter === filter.key}
                 >
                   {filter.label}
@@ -828,15 +850,15 @@ const StecklingsIndex = () => {
               <div
                 id="search-results"
                 role="listbox"
-                className="mt-4 max-h-[500px] overflow-y-auto rounded-2xl border-2 border-gray-100 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-slate-950/70"
+                className="mt-4 max-h-[500px] overflow-y-auto rounded-2xl border-2 border-gray-100 bg-white shadow-xl theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:shadow-slate-950/70"
               >
                 {isSearchLoading ? (
-                  <div className="flex items-center justify-center gap-3 p-8 text-sm text-gray-600 dark:text-slate-300">
+                  <div className="flex items-center justify-center gap-3 p-8 text-sm text-gray-600 theme-dark:text-slate-300">
                     <span className="inline-flex h-3 w-3 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
                     Suche läuft …
                   </div>
                 ) : searchError ? (
-                  <div className="p-6 text-center text-sm text-red-600 dark:text-red-400">
+                  <div className="p-6 text-center text-sm text-red-600 theme-dark:text-red-400">
                     {searchError}
                   </div>
                 ) : !hasResults ? (
@@ -870,7 +892,7 @@ const StecklingsIndex = () => {
                                   onClick={() =>
                                     handleResultClick("cultivar", cultivar)
                                   }
-                                className={`w-full rounded-xl p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${selectedIndex === globalIdx ? "border-2 border-green-500 bg-green-50 shadow-md dark:border-sky-500 dark:bg-slate-800" : "border-2 border-transparent hover:bg-gray-50 dark:hover:bg-slate-800"}`}
+                                className={`w-full rounded-xl p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${selectedIndex === globalIdx ? "border-2 border-green-500 bg-green-50 shadow-md theme-dark:border-sky-500 theme-dark:bg-slate-800" : "border-2 border-transparent hover:bg-gray-50 theme-dark:hover:bg-slate-800"}`}
                                 >
                                   <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1">
@@ -909,14 +931,14 @@ const StecklingsIndex = () => {
                                             key={index}
                                             value={thumb}
                                             alt={`${cultivar.name} Vorschau ${index + 1}`}
-                                            className="flex h-8 w-8 items-center justify-center overflow-hidden rounded bg-green-100 text-sm dark:bg-slate-800"
+                                            className="flex h-8 w-8 items-center justify-center overflow-hidden rounded bg-green-100 text-sm theme-dark:bg-slate-800"
                                             imgClassName="h-full w-full object-cover"
                                           />
                                         ))}
                                       </div>
                                       {renderOfferingBadges(cultivar.offerings)}
                                     </div>
-                                    <ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-gray-400 dark:text-slate-500" />
+                                    <ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-gray-400 theme-dark:text-slate-500" />
                                   </div>
                                 </button>
                               );
@@ -946,7 +968,7 @@ const StecklingsIndex = () => {
                                   onClick={() =>
                                     handleResultClick("provider", provider)
                                   }
-                                className={`w-full rounded-xl p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${selectedIndex === globalIdx ? "border-2 border-green-500 bg-green-50 shadow-md dark:border-sky-500 dark:bg-slate-800" : "border-2 border-transparent hover:bg-gray-50 dark:hover:bg-slate-800"}`}
+                                className={`w-full rounded-xl p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${selectedIndex === globalIdx ? "border-2 border-green-500 bg-green-50 shadow-md theme-dark:border-sky-500 theme-dark:bg-slate-800" : "border-2 border-transparent hover:bg-gray-50 theme-dark:hover:bg-slate-800"}`}
                                 >
                                   <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1">
@@ -985,7 +1007,7 @@ const StecklingsIndex = () => {
                                         {provider.reportCount} Berichte
                                       </span>
                                     </div>
-                                    <ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-gray-400 dark:text-slate-500" />
+                                    <ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-gray-400 theme-dark:text-slate-500" />
                                   </div>
                                 </button>
                               );
@@ -1015,7 +1037,7 @@ const StecklingsIndex = () => {
                                   onClick={() =>
                                     handleResultClick("report", report)
                                   }
-                                className={`w-full rounded-xl p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${selectedIndex === globalIdx ? "border-2 border-green-500 bg-green-50 shadow-md dark:border-sky-500 dark:bg-slate-800" : "border-2 border-transparent hover:bg-gray-50 dark:hover:bg-slate-800"}`}
+                                className={`w-full rounded-xl p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-green-500 ${selectedIndex === globalIdx ? "border-2 border-green-500 bg-green-50 shadow-md theme-dark:border-sky-500 theme-dark:bg-slate-800" : "border-2 border-transparent hover:bg-gray-50 theme-dark:hover:bg-slate-800"}`}
                                 >
                                   <div className="flex items-start gap-4">
                                     <div className="flex gap-1">
@@ -1024,7 +1046,7 @@ const StecklingsIndex = () => {
                                           key={index}
                                           value={img}
                                           alt={`${report.title} Bild ${index + 1}`}
-                                          className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-green-100 text-2xl dark:bg-slate-800"
+                                          className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-green-100 text-2xl theme-dark:bg-slate-800"
                                           imgClassName="h-full w-full object-cover"
                                         />
                                       ))}
@@ -1051,7 +1073,7 @@ const StecklingsIndex = () => {
                                         </div>
                                       </div>
                                     </div>
-                                    <ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-gray-400 dark:text-slate-500" />
+                                    <ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-gray-400 theme-dark:text-slate-500" />
                                   </div>
                                 </button>
                               );
@@ -1065,24 +1087,24 @@ const StecklingsIndex = () => {
             )}
           </div>
 
-          <aside className="flex-none rounded-3xl border border-green-200 bg-gradient-to-br from-green-50 via-white to-green-100/80 p-6 shadow-lg shadow-green-100/60 ring-1 ring-green-100/40 lg:w-80 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/60 dark:ring-slate-800/60">
+          <aside className="flex-none self-start rounded-3xl border border-green-200 bg-gradient-to-br from-green-50 via-white to-green-100/80 p-6 shadow-lg shadow-green-100/60 ring-1 ring-green-100/40 lg:w-80 theme-dark:border-slate-800 theme-dark:bg-slate-900/70 theme-dark:shadow-slate-950/60 theme-dark:ring-slate-800/60">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-green-100 text-green-700 dark:bg-slate-800 dark:text-sky-300">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-green-100 text-green-700 theme-dark:bg-slate-800 theme-dark:text-sky-300">
                 <FilePlus2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
+                <h3 className="text-base font-semibold text-gray-900 theme-dark:text-slate-100">
                   Neuer Bericht
                 </h3>
-                <p className="text-xs text-gray-500 dark:text-slate-400">
+                <p className="text-xs text-gray-500 theme-dark:text-slate-400">
                   Teile Bilder, Setup und dein Fazit mit der Community.
                 </p>
               </div>
             </div>
 
-            <ul className="mb-5 space-y-2 text-sm text-gray-600 dark:text-slate-300">
-              <li>• Upload von Bildern und Vergleichsfotos</li>
-              <li>• Angaben zu Setup, Lampe und Zeltgröße</li>
+            <ul className="mb-5 space-y-2 text-sm text-gray-600 theme-dark:text-slate-300">
+              <li>• Upload von Bildern & Vergleichsfotos</li>
+              <li>• Setup, Watt & Zeltgröße dokumentieren</li>
               <li>• Verknüpfung mit Sorte & Anbieter</li>
             </ul>
 
@@ -1093,7 +1115,7 @@ const StecklingsIndex = () => {
               Bericht einreichen
             </button>
 
-            <p className="mt-3 text-center text-xs text-gray-400 dark:text-slate-500">
+            <p className="mt-3 text-center text-xs text-gray-400 theme-dark:text-slate-500">
               Du wirst durch alle Schritte geführt.
             </p>
           </aside>
@@ -1102,27 +1124,27 @@ const StecklingsIndex = () => {
 
       <section className="mx-auto max-w-7xl px-4 py-4">
         {highlightsError && (
-          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-400/40 dark:bg-red-950/30 dark:text-red-200">
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 theme-dark:border-red-400/40 theme-dark:bg-red-950/30 theme-dark:text-red-200">
             {highlightsError}
           </div>
         )}
         {isHighlightsLoading && !highlightsError && topCultivars.length === 0 && (
-          <div className="mb-6 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-green-700 dark:border-sky-500/40 dark:bg-slate-900/60 dark:text-sky-200">
+          <div className="mb-6 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-green-700 theme-dark:border-sky-500/40 theme-dark:bg-slate-900/60 theme-dark:text-sky-200">
             Highlights werden geladen …
           </div>
         )}
         {showReportHighlights && (
-          <div className="mb-8 rounded-3xl border border-gray-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-slate-950/40">
+          <div className="mb-8 rounded-3xl border border-gray-200 bg-white/90 p-4 shadow-sm theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:shadow-slate-950/40">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-600 dark:text-sky-400" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                <TrendingUp className="h-4 w-4 text-green-600 theme-dark:text-sky-400" />
+                <h2 className="text-xl font-bold text-gray-900 theme-dark:text-slate-100">
                   Neueste Berichte
                 </h2>
               </div>
               <button
                 onClick={() => setReportsModalOpen(true)}
-                className="flex items-center gap-1 rounded-full border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:border-slate-700 dark:text-sky-200 dark:hover:bg-slate-800"
+                className="flex items-center gap-1 rounded-full border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 theme-dark:border-slate-700 theme-dark:text-sky-200 theme-dark:hover:bg-slate-800"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </button>
@@ -1136,17 +1158,17 @@ const StecklingsIndex = () => {
         )}
 
         {showCultivarHighlights && (
-          <div className="mb-8 rounded-3xl border border-gray-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-slate-950/40">
+          <div className="mb-8 rounded-3xl border border-gray-200 bg-white/90 p-4 shadow-sm theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:shadow-slate-950/40">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-600 dark:text-sky-400" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                <TrendingUp className="h-4 w-4 text-green-600 theme-dark:text-sky-400" />
+                <h2 className="text-xl font-bold text-gray-900 theme-dark:text-slate-100">
                   Beliebte Stecklinge
                 </h2>
               </div>
               <button
                 onClick={() => setCultivarModalOpen(true)}
-                className="flex items-center gap-1 rounded-full border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:border-slate-700 dark:text-sky-200 dark:hover:bg-slate-800"
+                className="flex items-center gap-1 rounded-full border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 theme-dark:border-slate-700 theme-dark:text-sky-200 theme-dark:hover:bg-slate-800"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </button>
@@ -1164,39 +1186,39 @@ const StecklingsIndex = () => {
                     key={cultivar.id}
                     type="button"
                     onClick={() => setPreviewCultivarSlug(cultivar.slug)}
-                    className="group overflow-hidden rounded-lg border border-gray-200 bg-white text-left transition-all hover:border-green-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-sky-500"
+                    className="group overflow-hidden rounded-lg border border-gray-200 bg-white text-left transition-all hover:border-green-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:hover:border-sky-500"
                   >
-                    <div className="grid grid-cols-3 gap-0.5 bg-gray-50 p-0.5 dark:bg-slate-800/80">
+                    <div className="grid grid-cols-3 gap-0.5 bg-gray-50 p-0.5 theme-dark:bg-slate-800/80">
                       {previewImages.length > 0 ? (
                         previewImages.map((thumb, index) => (
                           <ThumbnailCell
                             key={index}
                             value={thumb}
                             alt={`${cultivar.name} Bild ${index + 1}`}
-                            className="flex aspect-square items-center justify-center overflow-hidden rounded bg-green-100 text-xs dark:bg-slate-900/70"
+                            className="flex aspect-square items-center justify-center overflow-hidden rounded bg-green-100 text-xs theme-dark:bg-slate-900/70"
                             imgClassName="h-full w-full object-cover"
                           />
                         ))
                       ) : (
-                        <div className="col-span-3 flex aspect-[3/1] items-center justify-center rounded bg-green-100 text-xs font-semibold text-green-700 dark:bg-slate-900/70 dark:text-sky-200">
+                        <div className="col-span-3 flex aspect-[3/1] items-center justify-center rounded bg-green-100 text-xs font-semibold text-green-700 theme-dark:bg-slate-900/70 theme-dark:text-sky-200">
                           Keine Bilder vorhanden
                         </div>
                       )}
                     </div>
                   <div className="p-1.5">
                     <div className="mb-0.5 flex items-center gap-0.5">
-                      <h3 className="flex-1 line-clamp-1 text-xs font-bold text-gray-900 transition-colors group-hover:text-green-600 dark:text-slate-100 dark:group-hover:text-sky-300">
+                      <h3 className="flex-1 line-clamp-1 text-xs font-bold text-gray-900 transition-colors group-hover:text-green-600 theme-dark:text-slate-100 theme-dark:group-hover:text-sky-300">
                         {cultivar.name}
                       </h3>
                       <span className="text-xs">🔥</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                      <span className="text-xs font-bold text-gray-900 dark:text-slate-100">
+                      <span className="text-xs font-bold text-gray-900 theme-dark:text-slate-100">
                         {cultivar.avgRating}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-slate-400">·</span>
-                      <span className="text-xs text-gray-600 dark:text-slate-300">
+                      <span className="text-xs text-gray-500 theme-dark:text-slate-400">·</span>
+                      <span className="text-xs text-gray-600 theme-dark:text-slate-300">
                         {cultivar.reportCount}
                       </span>
                     </div>
@@ -1210,17 +1232,17 @@ const StecklingsIndex = () => {
         )}
 
         {showSeedHighlights && topSeeds.length > 0 && (
-          <div className="mb-8 rounded-3xl border border-gray-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-slate-950/40">
+          <div className="mb-8 rounded-3xl border border-gray-200 bg-white/90 p-4 shadow-sm theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:shadow-slate-950/40">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sprout className="h-4 w-4 text-emerald-600 dark:text-sky-400" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                <Sprout className="h-4 w-4 text-emerald-600 theme-dark:text-sky-400" />
+                <h2 className="text-xl font-bold text-gray-900 theme-dark:text-slate-100">
                   Beliebte Samen
                 </h2>
               </div>
               <button
                 onClick={() => setSeedsModalOpen(true)}
-                className="flex items-center gap-1 rounded-full border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:border-slate-700 dark:text-sky-200 dark:hover:bg-slate-800"
+                className="flex items-center gap-1 rounded-full border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 theme-dark:border-slate-700 theme-dark:text-sky-200 theme-dark:hover:bg-slate-800"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </button>
@@ -1230,37 +1252,37 @@ const StecklingsIndex = () => {
               {topSeeds.map((seed) => (
                 <div
                   key={seed.id}
-                  className="group flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white text-left transition-all hover:border-green-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-sky-500"
+                  className="group flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white text-left transition-all hover:border-green-500 hover:shadow-md theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:hover:border-sky-500"
                 >
-                  <div className="grid grid-cols-3 gap-0.5 bg-gray-50 p-0.5 dark:bg-slate-800/80">
+                  <div className="grid grid-cols-3 gap-0.5 bg-gray-50 p-0.5 theme-dark:bg-slate-800/80">
                     {seed.thumbnails.slice(0, 6).map((thumb, index) => (
                       <ThumbnailCell
                         key={index}
                         value={thumb}
                         alt={`${seed.name} Thumbnail ${index + 1}`}
-                        className="flex aspect-square items-center justify-center overflow-hidden rounded bg-emerald-100 text-xs dark:bg-slate-900/70"
+                        className="flex aspect-square items-center justify-center overflow-hidden rounded bg-emerald-100 text-xs theme-dark:bg-slate-900/70"
                         imgClassName="h-full w-full object-cover"
                       />
                     ))}
                   </div>
                   <div className="flex flex-1 flex-col p-1.5">
                     <div className="mb-0.5 flex items-center justify-between gap-1">
-                      <h3 className="line-clamp-1 text-xs font-bold text-gray-900 transition-colors group-hover:text-green-600 dark:text-slate-100 dark:group-hover:text-sky-300">
+                      <h3 className="line-clamp-1 text-xs font-bold text-gray-900 transition-colors group-hover:text-green-600 theme-dark:text-slate-100 theme-dark:group-hover:text-sky-300">
                         {seed.name}
                       </h3>
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-slate-800/70 dark:text-sky-200">
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 theme-dark:bg-slate-800/70 theme-dark:text-sky-200">
                         {seed.type}
                       </span>
                     </div>
-                    <p className="line-clamp-1 text-[11px] text-gray-500 dark:text-slate-400">
+                    <p className="line-clamp-1 text-[11px] text-gray-500 theme-dark:text-slate-400">
                       von {seed.breeder}
                     </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500 dark:text-slate-400">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500 theme-dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-600 theme-dark:bg-slate-800 theme-dark:text-slate-300">
                         <Clock className="h-3 w-3" />
                         {seed.floweringTime}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-600 theme-dark:bg-slate-800 theme-dark:text-slate-300">
                         <Package className="h-3 w-3" />
                         {seed.yield}
                       </span>
@@ -1273,17 +1295,17 @@ const StecklingsIndex = () => {
         )}
 
         {showProviderHighlights && (
-          <div className="mb-8 rounded-3xl border border-gray-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100 dark:shadow-slate-950/40">
+          <div className="mb-8 rounded-3xl border border-gray-200 bg-white/90 p-4 shadow-sm theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:text-slate-100 theme-dark:shadow-slate-950/40">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 fill-amber-500 text-amber-500 dark:text-amber-300" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                <Star className="h-4 w-4 fill-amber-500 text-amber-500 theme-dark:text-amber-300" />
+                <h2 className="text-xl font-bold text-gray-900 theme-dark:text-slate-100">
                   Top Anbieter
                 </h2>
               </div>
               <button
                 onClick={() => setProvidersModalOpen(true)}
-                className="flex items-center gap-1 rounded-full border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 dark:border-slate-700 dark:text-sky-200 dark:hover:bg-slate-800"
+                className="flex items-center gap-1 rounded-full border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-2 theme-dark:border-slate-700 theme-dark:text-sky-200 theme-dark:hover:bg-slate-800"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </button>
@@ -1294,23 +1316,23 @@ const StecklingsIndex = () => {
                 <Link
                   key={provider.id}
                   href={`/providers/${provider.slug}`}
-                  className="group rounded-lg border border-gray-200 bg-white p-2 transition-all hover:border-green-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-sky-500"
+                  className="group rounded-lg border border-gray-200 bg-white p-2 transition-all hover:border-green-500 hover:shadow-md theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:hover:border-sky-500"
                 >
                   <div className="mb-1 flex items-start justify-between">
                     <div className="min-w-0 flex-1">
-                      <h3 className="mb-0.5 line-clamp-1 text-xs font-bold text-gray-900 transition-colors group-hover:text-green-600 dark:text-slate-100 dark:group-hover:text-sky-300">
+                      <h3 className="mb-0.5 line-clamp-1 text-xs font-bold text-gray-900 transition-colors group-hover:text-green-600 theme-dark:text-slate-100 theme-dark:group-hover:text-sky-300">
                         {provider.name}
                       </h3>
                       <span className="text-base">{provider.countryFlag}</span>
                     </div>
                     <div className="ml-1 flex flex-shrink-0 items-center gap-0.5">
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      <span className="text-sm font-bold text-gray-900 dark:text-slate-100">
+                      <span className="text-sm font-bold text-gray-900 theme-dark:text-slate-100">
                         {provider.avgScore}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-slate-400">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600 theme-dark:text-slate-400">
                     <Package className="h-2.5 w-2.5 text-blue-600" />
                     <span>{provider.shippingScore}</span>
                     <Droplets className="h-2.5 w-2.5 text-green-600" />
@@ -1325,42 +1347,42 @@ const StecklingsIndex = () => {
 
       {communityFeedbackEnabled && plannedItems.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pb-4">
-          <div className="rounded-3xl border border-dashed border-emerald-300 bg-emerald-50/70 p-6 shadow-sm backdrop-blur-sm dark:border-sky-500/60 dark:bg-slate-900/70">
+          <div className="rounded-3xl border border-dashed border-emerald-300 bg-emerald-50/70 p-6 shadow-sm backdrop-blur-sm theme-dark:border-sky-500/60 theme-dark:bg-slate-900/70">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-emerald-900 dark:text-sky-200">
+                <h3 className="text-lg font-semibold text-emerald-900 theme-dark:text-sky-200">
                   Was wir als Nächstes angehen
                 </h3>
-                <p className="text-sm text-emerald-800/80 dark:text-sky-300/80">
+                <p className="text-sm text-emerald-800/80 theme-dark:text-sky-300/80">
                   Wir planen diese Bereiche – und die Community entscheidet mit, was Priorität bekommt.
                 </p>
               </div>
             </div>
-            <ul className="mt-4 grid gap-2 text-sm text-emerald-900/90 dark:text-sky-100 sm:grid-cols-2">
+            <ul className="mt-4 grid gap-2 text-sm text-emerald-900/90 theme-dark:text-sky-100 sm:grid-cols-2">
               {plannedItems.map((item, index) => (
                 <li
                   key={`${item}-${index}`}
-                  className="flex items-start gap-2 rounded-xl bg-white/70 px-3 py-2 shadow-sm ring-1 ring-white/40 backdrop-blur-sm dark:bg-slate-950/40 dark:ring-slate-800/60"
+                  className="flex items-start gap-2 rounded-xl bg-white/70 px-3 py-2 shadow-sm ring-1 ring-white/40 backdrop-blur-sm theme-dark:bg-slate-950/40 theme-dark:ring-slate-800/60"
                 >
-                  <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-emerald-400 dark:bg-sky-400" />
+                  <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-emerald-400 theme-dark:bg-sky-400" />
                   <span className="leading-snug">{item}</span>
                 </li>
               ))}
             </ul>
-            <div className="mt-6 rounded-2xl border border-emerald-200/60 bg-white/70 p-4 shadow-sm backdrop-blur-sm dark:border-sky-500/40 dark:bg-slate-950/50">
+            <div className="mt-6 rounded-2xl border border-emerald-200/60 bg-white/70 p-4 shadow-sm backdrop-blur-sm theme-dark:border-sky-500/40 theme-dark:bg-slate-950/50">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h4 className="text-base font-semibold text-emerald-900 dark:text-sky-200">
+                  <h4 className="text-base font-semibold text-emerald-900 theme-dark:text-sky-200">
                     Community-Feedback
                   </h4>
-                  <p className="text-xs text-emerald-800/80 dark:text-sky-300/80">
+                  <p className="text-xs text-emerald-800/80 theme-dark:text-sky-300/80">
                     Teile Ideen, Wünsche oder Ergänzungen – wir berücksichtigen alles bei der nächsten Planung.
                   </p>
                 </div>
                 {!isAuthenticated && (
                   <Link
                     href={loginHref}
-                    className="mt-2 inline-flex items-center justify-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-300 dark:border-sky-500/50 dark:text-sky-200 dark:hover:bg-slate-900/60"
+                    className="mt-2 inline-flex items-center justify-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-300 theme-dark:border-sky-500/50 theme-dark:text-sky-200 theme-dark:hover:bg-slate-900/60"
                   >
                     Anmelden & mitdiskutieren
                   </Link>
@@ -1378,11 +1400,11 @@ const StecklingsIndex = () => {
               )}
               <div className="mt-4 space-y-3">
                 {plannedFeedbackLoading ? (
-                  <p className="text-xs text-emerald-700/70 dark:text-sky-300/80">
+                  <p className="text-xs text-emerald-700/70 theme-dark:text-sky-300/80">
                     Lade Community-Stimmen …
                   </p>
                 ) : plannedFeedback.length === 0 ? (
-                  <p className="text-xs text-emerald-700/80 dark:text-sky-300/80">
+                  <p className="text-xs text-emerald-700/80 theme-dark:text-sky-300/80">
                     Noch keine Kommentare – starte gerne mit deinem Vorschlag!
                   </p>
                 ) : (
@@ -1392,14 +1414,14 @@ const StecklingsIndex = () => {
                       return (
                         <li
                           key={entry.id}
-                          className="rounded-2xl border border-emerald-200/70 bg-white/90 px-3 py-2 text-sm shadow-sm dark:border-sky-500/40 dark:bg-slate-950/60"
+                          className="rounded-2xl border border-emerald-200/70 bg-white/90 px-3 py-2 text-sm shadow-sm theme-dark:border-sky-500/40 theme-dark:bg-slate-950/60"
                         >
                           <div className="flex flex-wrap items-start justify-between gap-2">
                             <div>
-                              <span className="block font-semibold text-emerald-900 dark:text-sky-100">
+                              <span className="block font-semibold text-emerald-900 theme-dark:text-sky-100">
                                 {entry.displayName}
                               </span>
-                              <span className="text-xs text-emerald-700/70 dark:text-sky-300/70">
+                              <span className="text-xs text-emerald-700/70 theme-dark:text-sky-300/70">
                                 {formatPlannedFeedbackTimestamp(entry.createdAt)}
                               </span>
                             </div>
@@ -1409,7 +1431,7 @@ const StecklingsIndex = () => {
                                   type="button"
                                   onClick={() => void handleArchivePlannedFeedback(entry.id, true)}
                                   disabled={isBusy}
-                                  className="rounded-lg border border-emerald-200 px-2.5 py-1 font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-500/50 dark:text-sky-200 dark:hover:bg-slate-900/60"
+                                  className="rounded-lg border border-emerald-200 px-2.5 py-1 font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 theme-dark:border-sky-500/50 theme-dark:text-sky-200 theme-dark:hover:bg-slate-900/60"
                                 >
                                   Archivieren
                                 </button>
@@ -1425,14 +1447,14 @@ const StecklingsIndex = () => {
                                     }
                                   }}
                                   disabled={isBusy}
-                                  className="rounded-lg border border-red-200 px-2.5 py-1 font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                                  className="rounded-lg border border-red-200 px-2.5 py-1 font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 theme-dark:border-red-400/60 theme-dark:text-red-300 theme-dark:hover:bg-red-950/40"
                                 >
                                   Löschen
                                 </button>
                               </div>
                             )}
                           </div>
-                          <p className="mt-1 whitespace-pre-line text-sm leading-snug text-emerald-900/90 dark:text-sky-100/90">
+                          <p className="mt-1 whitespace-pre-line text-sm leading-snug text-emerald-900/90 theme-dark:text-sky-100/90">
                             {entry.body}
                           </p>
                         </li>
@@ -1453,11 +1475,11 @@ const StecklingsIndex = () => {
                       }
                     }}
                     rows={3}
-                    className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm text-emerald-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200 dark:border-sky-500/40 dark:bg-slate-950 dark:text-sky-100"
+                    className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm text-emerald-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200 theme-dark:border-sky-500/40 theme-dark:bg-slate-950 theme-dark:text-sky-100"
                     placeholder="Deine Idee oder Anmerkung …"
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <span className="text-emerald-700/70 dark:text-sky-300/70">
+                    <span className="text-emerald-700/70 theme-dark:text-sky-300/70">
                       {Math.max(0, 600 - newPlannedFeedback.length)} Zeichen übrig
                     </span>
                     <button
@@ -1468,7 +1490,7 @@ const StecklingsIndex = () => {
                         isSubmittingPlannedFeedback ||
                         newPlannedFeedback.length === 0
                       }
-                      className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300 dark:bg-sky-500 dark:hover:bg-sky-400 dark:disabled:bg-slate-700"
+                      className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300 theme-dark:bg-sky-500 theme-dark:hover:bg-sky-400 theme-dark:disabled:bg-slate-700"
                     >
                       {isSubmittingPlannedFeedback ? "Speichere …" : "Feedback senden"}
                     </button>
@@ -1480,66 +1502,64 @@ const StecklingsIndex = () => {
         </section>
       )}
 
-      {supportCtaEnabled && (
-        <section className="mx-auto max-w-7xl px-4 py-8">
-          <div className="flex justify-end">
-            <div className="w-full max-w-sm rounded-2xl border border-green-200 bg-white/95 p-5 text-right shadow-lg shadow-green-100/40 dark:border-slate-700 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-slate-950/40">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
-                Du möchtest PhenoHub unterstützen?
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-slate-300">
-                Freiwilliges 3,99&nbsp;€ Supporter-Abo für Serverkosten &amp; neue Features.
-              </p>
-              <Link
-                href="/support"
-                className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-1 dark:bg-sky-500 dark:hover:bg-sky-400"
-              >
-                ❤️ Mehr erfahren & eintragen
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="mt-8 border-t border-amber-200 bg-gradient-to-br from-amber-50 via-amber-100 to-amber-50/90 dark:border-slate-800 dark:bg-[rgba(6,11,23,0.85)]">
-        <div className="mx-auto max-w-7xl px-4 py-8">
-          <div className="flex items-start gap-3 rounded-3xl bg-amber-50/90 p-6 shadow-[0_12px_35px_rgba(245,158,11,0.18)] ring-1 ring-amber-100 dark:bg-transparent dark:shadow-none dark:ring-0">
-            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-sky-300" />
-            <div>
-              <p className="mb-3 text-amber-900 dark:text-slate-200">
-                Diese Plattform dient ausschließlich der Dokumentation und
-                Recherche. Kein Verkauf, keine Vermittlung. Inhalte stammen von
-                Nutzern. Bitte beachte lokale Gesetze.
-              </p>
-              <div className="flex flex-wrap gap-4 text-sm text-amber-800/90 dark:text-slate-300">
-                <button
-                  type="button"
-                  onClick={() => setImprintOpen(true)}
-                  className="text-amber-700 underline transition-colors hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
-                >
-                  Impressum
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPrivacyOpen(true)}
-                  className="text-amber-700 underline transition-colors hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
-                >
-                  Datenschutz
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTermsOpen(true)}
-                  className="text-amber-700 underline transition-colors hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 dark:text-sky-300 dark:hover:text-sky-200 dark:focus:ring-sky-400"
-                >
-                  Nutzungsbedingungen
-                </button>
+      <section className="mt-8 border-t border-amber-200 bg-gradient-to-r from-amber-50 via-amber-100 to-amber-50 theme-dark:border-slate-800 theme-dark:bg-[rgba(6,11,23,0.85)]">
+        <div className="mx-auto max-w-6xl px-4 py-4">
+          <div className="flex flex-col-reverse gap-6 md:flex-row md:items-start md:justify-between md:flex-row">
+            <div className="flex flex-1 items-start gap-3 rounded-2xl bg-amber-50/85 p-4 shadow-[0_8px_24px_rgba(245,158,11,0.12)] ring-1 ring-amber-100 theme-dark:bg-transparent theme-dark:shadow-none theme-dark:ring-0">
+              <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 theme-dark:text-sky-300" />
+              <div>
+                <p className="mb-2 text-sm text-amber-900 theme-dark:text-slate-200">
+                  Diese Plattform dient ausschließlich der Dokumentation und
+                  Recherche. Kein Verkauf, keine Vermittlung. Inhalte stammen von
+                  Nutzern. Bitte beachte lokale Gesetze.
+                </p>
+                <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-wide text-amber-800/90 theme-dark:text-slate-300">
+                  <button
+                    type="button"
+                    onClick={() => setImprintOpen(true)}
+                    className="text-amber-700 underline transition-colors hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 theme-dark:text-sky-300 theme-dark:hover:text-sky-200 theme-dark:focus:ring-sky-400"
+                  >
+                    Impressum
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrivacyOpen(true)}
+                    className="text-amber-700 underline transition-colors hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 theme-dark:text-sky-300 theme-dark:hover:text-sky-200 theme-dark:focus:ring-sky-400"
+                  >
+                    Datenschutz
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTermsOpen(true)}
+                    className="text-amber-700 underline transition-colors hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 theme-dark:text-sky-300 theme-dark:hover:text-sky-200 theme-dark:focus:ring-sky-400"
+                  >
+                    Nutzungsbedingungen
+                  </button>
+                </div>
               </div>
             </div>
+
+            {supportCtaEnabled && (
+              <div className="w-full max-w-sm self-center rounded-2xl border border-amber-200 bg-white/95 p-4 text-left shadow-md shadow-amber-200/30 transition theme-dark:border-slate-700 theme-dark:bg-slate-900/80 theme-dark:shadow-slate-950/40 md:self-start md:order-last">
+                <h3 className="text-sm font-semibold text-gray-900 theme-dark:text-slate-100">
+                  Du möchtest PhenoHub unterstützen?
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-gray-600 theme-dark:text-slate-300">
+                  Freiwilliges 3,99&nbsp;€ Supporter-Abo für Serverkosten &amp; neue Features.
+                </p>
+                <Link
+                  href="/support"
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 focus:ring-offset-1 theme-dark:bg-sky-500 theme-dark:hover:bg-sky-400"
+                >
+                  ❤️ Mehr erfahren & eintragen
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      <footer className="bg-gray-900 py-8 text-gray-400 dark:bg-slate-950 dark:text-slate-500">
+      <footer className="bg-gray-900 py-8 text-gray-400 theme-dark:bg-slate-950 theme-dark:text-slate-500">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <p className="text-sm">©️ 2025 PhenoHub. Alle Rechte vorbehalten.</p>
         </div>
@@ -1586,28 +1606,28 @@ const StecklingsIndex = () => {
           aria-modal="true"
           aria-labelledby="imprint-title"
         >
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-green-100 bg-white/95 p-6 shadow-2xl shadow-green-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-900/60">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-green-100 bg-white/95 p-6 shadow-2xl shadow-green-200/40 theme-dark:border-slate-800 theme-dark:bg-slate-900/90 theme-dark:shadow-slate-900/60">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
-                <p className="inline-flex items-center rounded-full border border-green-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-green-700 dark:border-sky-500/60 dark:text-sky-200">
+                <p className="inline-flex items-center rounded-full border border-green-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-green-700 theme-dark:border-sky-500/60 theme-dark:text-sky-200">
                   Rechtliche Angaben
                 </p>
-                <h2 id="imprint-title" className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
+                <h2 id="imprint-title" className="text-2xl font-semibold text-gray-900 theme-dark:text-slate-100">
                   Impressum
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setImprintOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 theme-dark:bg-slate-800 theme-dark:text-slate-300 theme-dark:hover:bg-slate-700"
                 aria-label="Impressum schließen"
               >
                 ×
               </button>
             </div>
-            <div className="mt-6 space-y-6 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
+            <div className="mt-6 space-y-6 text-sm leading-relaxed text-gray-700 theme-dark:text-slate-300">
               <section>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Betreiber</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">Betreiber</h3>
                 <address className="mt-2 space-y-1 not-italic">
                   <p>PhenoHub – Andrej Petri</p>
                   <p>Straße des 17. Juni 12</p>
@@ -1620,7 +1640,7 @@ const StecklingsIndex = () => {
                   <span className="font-semibold">Kontakt:</span>{" "}
                   <a
                     href="mailto:support@phenohub.app"
-                    className="text-green-700 underline transition hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                    className="text-green-700 underline transition hover:text-green-800 theme-dark:text-sky-300 theme-dark:hover:text-sky-200"
                   >
                     support@phenohub.app
                   </a>
@@ -1633,14 +1653,14 @@ const StecklingsIndex = () => {
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">
                   Verantwortlich für den Inhalt
                 </h3>
                 <p>
                   Andrej Petri (Anschrift wie oben). Anfragen zu Inhalten oder Rechtsverstößen bitte an{" "}
                   <a
                     href="mailto:legal@phenohub.app"
-                    className="text-green-700 underline transition hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                    className="text-green-700 underline transition hover:text-green-800 theme-dark:text-sky-300 theme-dark:hover:text-sky-200"
                   >
                     legal@phenohub.app
                   </a>
@@ -1648,7 +1668,7 @@ const StecklingsIndex = () => {
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Haftungshinweise</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">Haftungshinweise</h3>
                 <p>
                   Trotz sorgfältiger Kontrolle übernehmen wir keine Haftung für externe Links. Für deren Inhalte
                   sind ausschließlich die Betreiber verantwortlich.
@@ -1658,7 +1678,7 @@ const StecklingsIndex = () => {
                   Nutzer müssen geltende Gesetze beachten.
                 </p>
               </section>
-              <p className="text-xs text-gray-500 dark:text-slate-400">Stand: Oktober 2025</p>
+              <p className="text-xs text-gray-500 theme-dark:text-slate-400">Stand: Oktober 2025</p>
             </div>
           </div>
         </div>
@@ -1670,33 +1690,33 @@ const StecklingsIndex = () => {
           aria-modal="true"
           aria-labelledby="privacy-title"
         >
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-green-100 bg-white/95 p-6 shadow-2xl shadow-green-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-900/60">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-green-100 bg-white/95 p-6 shadow-2xl shadow-green-200/40 theme-dark:border-slate-800 theme-dark:bg-slate-900/90 theme-dark:shadow-slate-900/60">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
-                <p className="inline-flex items-center rounded-full border border-green-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-green-700 dark:border-sky-500/60 dark:text-sky-200">
+                <p className="inline-flex items-center rounded-full border border-green-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-green-700 theme-dark:border-sky-500/60 theme-dark:text-sky-200">
                   Datenschutz
                 </p>
-                <h2 id="privacy-title" className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
+                <h2 id="privacy-title" className="text-2xl font-semibold text-gray-900 theme-dark:text-slate-100">
                   Datenschutzerklärung
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setPrivacyOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 theme-dark:bg-slate-800 theme-dark:text-slate-300 theme-dark:hover:bg-slate-700"
                 aria-label="Datenschutzerklärung schließen"
               >
                 ×
               </button>
             </div>
-            <div className="mt-6 space-y-6 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
+            <div className="mt-6 space-y-6 text-sm leading-relaxed text-gray-700 theme-dark:text-slate-300">
               <section>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">1. Verantwortlicher</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">1. Verantwortlicher</h3>
                 <p>
                   Andrej Petri, Straße des 17. Juni 12, 10623 Berlin, Deutschland. Kontakt:{" "}
                   <a
                     href="mailto:privacy@phenohub.app"
-                    className="text-green-700 underline transition hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                    className="text-green-700 underline transition hover:text-green-800 theme-dark:text-sky-300 theme-dark:hover:text-sky-200"
                   >
                     privacy@phenohub.app
                   </a>
@@ -1704,7 +1724,7 @@ const StecklingsIndex = () => {
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">2. Verarbeitete Daten</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">2. Verarbeitete Daten</h3>
                 <ul className="list-disc space-y-1 pl-5">
                   <li>Account-Daten (E-Mail, Benutzername, Rollenstatus, optionale Profildetails)</li>
                   <li>Nutzungsdaten (Server-Logs, IP-Adresse, Interaktionen mit Berichten und Kommentaren)</li>
@@ -1713,26 +1733,26 @@ const StecklingsIndex = () => {
                 </ul>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">3. Zwecke & Rechtsgrundlagen</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">3. Zwecke & Rechtsgrundlagen</h3>
                 <p>
                   Betrieb und Verbesserung (Art. 6 Abs. 1 lit. b DSGVO), berechtigte Interessen (lit. f),
                   gesetzliche Pflichten (lit. c) sowie Einwilligungen (lit. a) für Newsletter und Supporter-Infos.
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">4. Empfänger</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">4. Empfänger</h3>
                 <p>
                   Hosting (Render, Supabase), E-Mail (Resend) und Zahlungsabwicklung (Stripe). Auftragsverarbeitungsverträge
                   nach Art. 28 DSGVO sind abgeschlossen.
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">5. Speicherdauer</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">5. Speicherdauer</h3>
                 <p>
                   Speicherung nur solange wie nötig oder gesetzlich geboten. Kontolöschung auf Anfrage via{" "}
                   <a
                     href="mailto:privacy@phenohub.app"
-                    className="text-green-700 underline transition hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+                    className="text-green-700 underline transition hover:text-green-800 theme-dark:text-sky-300 theme-dark:hover:text-sky-200"
                   >
                     privacy@phenohub.app
                   </a>
@@ -1740,19 +1760,19 @@ const StecklingsIndex = () => {
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">6. Rechte</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">6. Rechte</h3>
                 <p>
                   Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch. Beschwerden
                   bei Aufsichtsbehörden möglich.
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">7. Cookies & Tracking</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">7. Cookies & Tracking</h3>
                 <p>
                   Notwendige Cookies sowie optionale Analyse-Tools (z.&nbsp;B. Plausible) nur mit Einwilligung; IPs werden anonymisiert.
                 </p>
               </section>
-              <p className="text-xs text-gray-500 dark:text-slate-400">Stand: Oktober 2025</p>
+              <p className="text-xs text-gray-500 theme-dark:text-slate-400">Stand: Oktober 2025</p>
             </div>
           </div>
         </div>
@@ -1764,69 +1784,69 @@ const StecklingsIndex = () => {
           aria-modal="true"
           aria-labelledby="terms-title"
         >
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-green-100 bg-white/95 p-6 shadow-2xl shadow-green-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-900/60">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-green-100 bg-white/95 p-6 shadow-2xl shadow-green-200/40 theme-dark:border-slate-800 theme-dark:bg-slate-900/90 theme-dark:shadow-slate-900/60">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
-                <p className="inline-flex items-center rounded-full border border-green-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-green-700 dark:border-sky-500/60 dark:text-sky-200">
+                <p className="inline-flex items-center rounded-full border border-green-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-green-700 theme-dark:border-sky-500/60 theme-dark:text-sky-200">
                   Nutzungsbedingungen
                 </p>
-                <h2 id="terms-title" className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
+                <h2 id="terms-title" className="text-2xl font-semibold text-gray-900 theme-dark:text-slate-100">
                   Allgemeine Geschäfts- und Nutzungsbedingungen
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setTermsOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-300 theme-dark:bg-slate-800 theme-dark:text-slate-300 theme-dark:hover:bg-slate-700"
                 aria-label="Nutzungsbedingungen schließen"
               >
                 ×
               </button>
             </div>
-            <div className="mt-6 space-y-6 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
+            <div className="mt-6 space-y-6 text-sm leading-relaxed text-gray-700 theme-dark:text-slate-300">
               <section>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">1. Geltungsbereich</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">1. Geltungsbereich</h3>
                 <p>
                   Diese Bedingungen gelten für alle Nutzer der Plattform. Mit Nutzung von PhenoHub stimmst du ihnen zu.
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">2. Registrierung & Account</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">2. Registrierung & Account</h3>
                 <p>
                   Für Berichte, Kommentare und Supporter-Abos ist ein Account erforderlich. Halte deine Zugangsdaten geheim und informiere uns bei Missbrauch.
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">3. Nutzerinhalte</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">3. Nutzerinhalte</h3>
                 <p>
                   Lade nur Inhalte hoch, an denen du die Rechte besitzt. Du gewährst PhenoHub ein einfaches Nutzungsrecht zur Darstellung und Archivierung. Unzulässig sind diskriminierende, strafbare oder urheberrechtsverletzende Beiträge.
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">4. Supporter-Abos</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">4. Supporter-Abos</h3>
                 <p>
                   Supporter-Abos werden über Stripe verwaltet, verlängern sich monatlich und sind jederzeit kündbar. Gesetzliche Widerrufsrechte bleiben bestehen.
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">5. Haftung</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">5. Haftung</h3>
                 <p>
                   Inhalte werden ohne Gewähr bereitgestellt. Wir haften nicht für Richtigkeit oder Vollständigkeit. Anbauentscheidungen triffst du eigenverantwortlich.
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">6. Kündigung & Sperrung</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">6. Kündigung & Sperrung</h3>
                 <p>
                   Wir können Accounts bei Verstößen sperren oder löschen. Du kannst deinen Account jederzeit löschen lassen.
                 </p>
               </section>
               <section className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">7. Änderungen</h3>
+                <h3 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">7. Änderungen</h3>
                 <p>
                   Wir behalten uns Anpassungen vor und informieren über wesentliche Änderungen. Die aktuelle Fassung steht immer hier bereit.
                 </p>
               </section>
-              <p className="text-xs text-gray-500 dark:text-slate-400">Stand: Oktober 2025</p>
+              <p className="text-xs text-gray-500 theme-dark:text-slate-400">Stand: Oktober 2025</p>
             </div>
           </div>
         </div>

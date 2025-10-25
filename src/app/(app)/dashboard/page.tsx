@@ -851,7 +851,7 @@ const DashboardPage = () => {
             <p className="text-sm text-gray-500">Lade Highlight-Einstellungen …</p>
           ) : highlightSettings ? (
             <div className="space-y-5">
-              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white theme-dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-gray-800">
                     „Beliebte Samen“ für Besucher anzeigen
@@ -869,7 +869,7 @@ const DashboardPage = () => {
                 </span>
               </label>
 
-              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white theme-dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-gray-800">
                     Supporter-Hinweisbox auf der Startseite anzeigen
@@ -887,7 +887,7 @@ const DashboardPage = () => {
                 </span>
               </label>
 
-              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white theme-dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-gray-800">
                     Community-Tab im Header anzeigen
@@ -905,7 +905,7 @@ const DashboardPage = () => {
                 </span>
               </label>
 
-              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+              <label className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-green-200 hover:bg-white theme-dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-gray-800">
                     Community-Feedback auf der Startseite anzeigen
@@ -922,7 +922,7 @@ const DashboardPage = () => {
                 </span>
               </label>
 
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 transition hover:border-green-200 hover:bg-white theme-dark:bg-gray-900">
                 <label className="flex flex-col gap-2 text-sm text-gray-600">
                   <span className="font-semibold text-gray-800">
                     Geplante Bereiche & Hinweise (Startseite)
@@ -935,7 +935,7 @@ const DashboardPage = () => {
                     value={highlightSettings.plannedNotes}
                     onChange={(event) => handlePlannedNotesChange(event.target.value)}
                     rows={4}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200 theme-dark:border-slate-700 theme-dark:bg-slate-950 theme-dark:text-slate-100"
                     placeholder={"Beliebte Samen\nApotheken-Sorten"}
                   />
                 </label>
@@ -1116,7 +1116,7 @@ const DashboardPage = () => {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 transition hover:border-green-200 hover:bg-white dark:bg-gray-900">
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 transition hover:border-green-200 hover:bg-white theme-dark:bg-gray-900">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900">
@@ -1162,7 +1162,7 @@ const DashboardPage = () => {
                       return (
                         <div
                           key={entry.id}
-                          className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-slate-950"
+                          className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm theme-dark:border-gray-800 theme-dark:bg-slate-950"
                         >
                           <div className="flex flex-wrap items-start justify-between gap-2">
                             <div>

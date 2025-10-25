@@ -21,6 +21,11 @@ model Cultivar {
   thumbnails  String[]           @default([])
   description String?
   genetics    String?
+  flavorProfile String?
+  aromaProfile String?
+  floweringTime String?
+  yieldPotential String?
+  effectProfile String?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   breeder     String?

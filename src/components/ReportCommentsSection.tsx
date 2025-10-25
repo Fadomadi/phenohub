@@ -130,27 +130,27 @@ const ReportCommentsSection = ({
   };
 
   return (
-    <section className="rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+    <section className="rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-sm theme-dark:border-slate-800 theme-dark:bg-slate-900/80">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Kommentare</h2>
-        <span className="text-xs text-gray-500 dark:text-slate-400">{comments.length} Beiträge</span>
+        <h2 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">Kommentare</h2>
+        <span className="text-xs text-gray-500 theme-dark:text-slate-400">{comments.length} Beiträge</span>
       </div>
 
       <div className="mt-4 space-y-3">
         {comments.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-slate-300">Noch keine Kommentare vorhanden.</p>
+          <p className="text-sm text-gray-500 theme-dark:text-slate-300">Noch keine Kommentare vorhanden.</p>
         ) : (
           comments.map((comment) => (
             <article
               key={comment.id}
-              className="rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200"
+              className="rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 theme-dark:border-slate-700 theme-dark:bg-slate-800/70 theme-dark:text-slate-200"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="block font-semibold text-gray-900 dark:text-slate-100">
+                  <span className="block font-semibold text-gray-900 theme-dark:text-slate-100">
                     {comment.authorName}
                   </span>
-                  <span className="text-xs text-gray-400 dark:text-slate-500">
+                  <span className="text-xs text-gray-400 theme-dark:text-slate-500">
                     {formatDateTime(comment.createdAt)}
                   </span>
                 </div>
@@ -159,14 +159,14 @@ const ReportCommentsSection = ({
                     type="button"
                     onClick={() => handleDelete(comment.id)}
                     disabled={deletingId === comment.id}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:cursor-not-allowed dark:hover:bg-slate-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:cursor-not-allowed theme-dark:hover:bg-slate-800"
                     aria-label={`Kommentar von ${comment.authorName} löschen`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 )}
               </div>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-slate-200">
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 theme-dark:text-slate-200">
                 {comment.body}
               </p>
             </article>
@@ -174,13 +174,13 @@ const ReportCommentsSection = ({
         )}
       </div>
 
-      <div className="mt-6 border-t border-gray-200 pt-4 dark:border-slate-700">
+      <div className="mt-6 border-t border-gray-200 pt-4 theme-dark:border-slate-700">
         {canComment ? (
           <form onSubmit={handleSubmit} className="space-y-3">
             <textarea
               value={commentText}
               onChange={(event) => setCommentText(event.target.value)}
-              className="w-full rounded-2xl border border-gray-300 px-3 py-3 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
+              className="w-full rounded-2xl border border-gray-300 px-3 py-3 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 theme-dark:border-slate-700 theme-dark:bg-slate-900/70 theme-dark:text-slate-100"
               rows={3}
               placeholder="Teile deine Erfahrung oder stelle eine Frage…"
               disabled={isPending}
@@ -198,7 +198,7 @@ const ReportCommentsSection = ({
             </div>
           </form>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-slate-300">
+          <p className="text-sm text-gray-500 theme-dark:text-slate-300">
             Bitte melde dich an, um Kommentare zu schreiben.
           </p>
         )}

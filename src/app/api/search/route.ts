@@ -19,6 +19,13 @@ type CultivarWithOfferings = {
   aka: string[];
   cloneOnly: boolean | null;
   cutInfo?: string | null;
+  description?: string | null;
+  genetics?: string | null;
+  flavorProfile?: string | null;
+  aromaProfile?: string | null;
+  floweringTime?: string | null;
+  yieldPotential?: string | null;
+  effectProfile?: string | null;
   reportCount: number;
   avgRating: unknown;
   imageCount: number;
@@ -65,6 +72,13 @@ const toCultivar = (cultivar: CultivarWithOfferings) => ({
   trending: cultivar.trending,
   thumbnails: cultivar.thumbnails,
   breeder: cultivar.breeder ?? null,
+  description: cultivar.description ?? null,
+  genetics: cultivar.genetics ?? null,
+  flavorProfile: cultivar.flavorProfile ?? null,
+  aromaProfile: cultivar.aromaProfile ?? null,
+  floweringTime: cultivar.floweringTime ?? null,
+  yieldPotential: cultivar.yieldPotential ?? null,
+  effectProfile: cultivar.effectProfile ?? null,
   offerings: (cultivar.offerings ?? []).map((offering) => ({
     providerName: offering.provider?.name ?? "",
     providerSlug: offering.provider?.slug ?? "",

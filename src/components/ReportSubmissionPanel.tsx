@@ -481,10 +481,10 @@ const ReportSubmissionPanel = ({
     };
 
     return (
-      <div className="flex w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/70">
+      <div className="flex w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white/80 p-3 theme-dark:border-slate-700 theme-dark:bg-slate-900/70">
         <div>
-          <p className="text-[13px] font-semibold text-gray-800 dark:text-slate-100">{label}</p>
-          <p className="text-[11px] leading-snug text-gray-500 dark:text-slate-400">{description}</p>
+          <p className="text-[13px] font-semibold text-gray-800 theme-dark:text-slate-100">{label}</p>
+          <p className="text-[11px] leading-snug text-gray-500 theme-dark:text-slate-400">{description}</p>
         </div>
         <div
           className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-1"
@@ -513,7 +513,7 @@ const ReportSubmissionPanel = ({
               <StarIcon className="h-3.5 w-3.5" />
             </button>
           ))}
-          <span className="w-full text-left text-[11px] text-gray-500 dark:text-slate-400 sm:ml-2 sm:w-auto">
+          <span className="w-full text-left text-[11px] text-gray-500 theme-dark:text-slate-400 sm:ml-2 sm:w-auto">
             {displayValue > 0
               ? `${displayValue} von 5${
                   hints?.[displayValue - 1] ? ` – ${hints[displayValue - 1]}` : ""
@@ -521,7 +521,7 @@ const ReportSubmissionPanel = ({
               : "Noch nicht bewertet"}
           </span>
         </div>
-        <p className="text-[10px] uppercase tracking-wide text-gray-400/80 dark:text-slate-500/80">
+        <p className="text-[10px] uppercase tracking-wide text-gray-400/80 theme-dark:text-slate-500/80">
           1 ⭐ {hints?.[0] ?? "Sehr schlecht"} · 5 ⭐ {hints?.[4] ?? "Hervorragend"}
         </p>
       </div>
@@ -784,16 +784,16 @@ const ReportSubmissionPanel = ({
                 "Pflegeaufwand / Schwierigkeitsgrad",
                 "Wie anspruchsvoll ist der Steckling im Grow? Bewertet wird die Toleranz gegenüber pH-, Düngungs-, Klima-, Licht- oder Trainingsfehlern.",
               )}
-              <div className="flex flex-col justify-center gap-2 rounded-2xl border border-green-200 bg-green-50/60 p-4 dark:border-slate-700 dark:bg-slate-900/70">
-                <p className="text-sm font-semibold text-green-700 dark:text-sky-200">
+              <div className="flex flex-col justify-center gap-2 rounded-2xl border border-green-200 bg-green-50/60 p-4 theme-dark:border-slate-700 theme-dark:bg-slate-900/70">
+                <p className="text-sm font-semibold text-green-700 theme-dark:text-sky-200">
                   Gesamtbewertung
                 </p>
-                <p className="text-xs text-green-700/80 dark:text-sky-300/80">
+                <p className="text-xs text-green-700/80 theme-dark:text-sky-300/80">
                   Durchschnitt aller Teilkategorien
                 </p>
-                <div className="mt-1 inline-flex items-center gap-2 text-xl font-bold text-green-700 dark:text-sky-200">
+                <div className="mt-1 inline-flex items-center gap-2 text-xl font-bold text-green-700 theme-dark:text-sky-200">
                   {averageRatingValue ?? "–"}
-                  <span className="text-base font-semibold text-green-600/70 dark:text-sky-300/80">
+                  <span className="text-base font-semibold text-green-600/70 theme-dark:text-sky-300/80">
                     / 5
                   </span>
                 </div>
@@ -840,7 +840,7 @@ const ReportSubmissionPanel = ({
                 {formState.images.map((file, index) => (
                   <li
                     key={`${file.name}-${file.lastModified}-${index}`}
-                    className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-600 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300"
+                    className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-600 shadow-sm theme-dark:border-slate-700 theme-dark:bg-slate-900/70 theme-dark:text-slate-300"
                   >
                     <span className="truncate pr-3">
                       {file.name} – {(file.size / (1024 * 1024)).toFixed(2)} MB
@@ -854,7 +854,7 @@ const ReportSubmissionPanel = ({
                         }));
                         setImageError(null);
                       }}
-                      className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700 theme-dark:bg-slate-800 theme-dark:text-slate-300 theme-dark:hover:bg-slate-700"
                       aria-label={`${file.name} entfernen`}
                     >
                       <Trash2 className="h-4 w-4" />

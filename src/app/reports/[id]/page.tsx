@@ -365,7 +365,7 @@ const describeRating = (key: string, value: number) => {
 const renderStars = (value: number, title?: string | null) => {
   if (!value || value <= 0) {
     return (
-      <span className="text-xs text-gray-400 dark:text-slate-500" title="Keine Bewertung">
+      <span className="text-xs text-gray-400 theme-dark:text-slate-500" title="Keine Bewertung">
         Keine Bewertung
       </span>
     );
@@ -783,7 +783,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     <div className="mx-auto max-w-6xl px-4 py-10">
       <Link
         href="/"
-        className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-green-700 underline transition hover:text-green-800 dark:text-sky-300 dark:hover:text-sky-200"
+        className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-green-700 underline transition hover:text-green-800 theme-dark:text-sky-300 theme-dark:hover:text-sky-200"
       >
         <ArrowLeft className="h-4 w-4" />
         Zur Übersicht
@@ -801,48 +801,48 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
 
       <div className="grid gap-10 xl:grid-cols-[minmax(0,1.6fr),minmax(0,0.9fr)]">
         <div className="space-y-8">
-          <section className="relative overflow-hidden rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-white to-green-50/70 p-6 shadow-lg shadow-green-100/40 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-900 md:p-8">
-            <span className="hidden md:inline-flex md:absolute md:right-8 md:top-6 md:-translate-y-1/2 md:transform md:items-center md:gap-1 md:rounded-full md:border md:border-gray-200 md:bg-white md:px-3 md:py-1 md:text-[11px] md:font-semibold md:uppercase md:tracking-wide md:text-gray-600 dark:md:border-slate-700 dark:md:bg-slate-900/80 dark:md:text-slate-300">
+          <section className="relative overflow-hidden rounded-3xl border border-gray-200 bg-gradient-to-br from-white via-white to-green-50/70 p-6 shadow-lg shadow-green-100/40 theme-dark:border-slate-800 theme-dark:from-slate-900 theme-dark:via-slate-900/95 theme-dark:to-slate-900 md:p-8">
+            <span className="hidden md:inline-flex md:absolute md:right-8 md:top-6 md:-translate-y-1/2 md:transform md:items-center md:gap-1 md:rounded-full md:border md:border-gray-200 md:bg-white md:px-3 md:py-1 md:text-[11px] md:font-semibold md:uppercase md:tracking-wide md:text-gray-600 theme-dark:md:border-slate-700 theme-dark:md:bg-slate-900/80 theme-dark:md:text-slate-300">
               Veröffentlicht am {publishedLabel}
             </span>
             <div className="space-y-10">
               <header className="space-y-4">
                 <div className="flex w-full items-center justify-end text-[11px] font-semibold uppercase tracking-wide text-gray-500 md:hidden">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-600 theme-dark:bg-slate-800 theme-dark:text-slate-300">
                     Veröffentlicht am {publishedLabel}
                   </span>
                 </div>
 
                 <div className="space-y-4">
-                  <h1 className="text-3xl font-semibold leading-tight text-gray-900 dark:text-slate-100 md:text-4xl">
+                  <h1 className="text-3xl font-semibold leading-tight text-gray-900 theme-dark:text-slate-100 md:text-4xl">
                     {report.title}
                   </h1>
                 </div>
               </header>
 
               <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-8">
-                <section className="flex-1 rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-md dark:border-slate-800 dark:bg-slate-900/70">
-                  <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                <section className="flex-1 rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-md theme-dark:border-slate-800 theme-dark:bg-slate-900/70">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 theme-dark:text-slate-400">
                     Grow-Notizen
                   </h2>
                   {paragraphs.length > 0 ? (
-                    <div className="mt-3 space-y-3 text-sm leading-relaxed text-gray-700 dark:text-slate-300">
+                    <div className="mt-3 space-y-3 text-sm leading-relaxed text-gray-700 theme-dark:text-slate-300">
                       {paragraphs.map((paragraph: string, index: number) => (
                         <p key={index}>{paragraph}</p>
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-3 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                    <p className="mt-3 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 theme-dark:border-slate-700 theme-dark:bg-slate-900/60 theme-dark:text-slate-300">
                       Noch keine Details ergänzt.
                     </p>
                   )}
                 </section>
 
-                <aside className="flex w-full flex-col gap-4 rounded-3xl border border-gray-200 bg-white/95 p-6 shadow-md dark:border-slate-800 dark:bg-slate-900/70 lg:w-[40%]">
-                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                <aside className="flex w-full flex-col gap-4 rounded-3xl border border-transparent bg-white/95 p-6 shadow-md theme-dark:border-slate-800 theme-dark:bg-slate-900/70 lg:w-[40%]">
+                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500 theme-dark:text-slate-400">
                     <span>Galerie</span>
                     {reportImageStackItems.length > 1 && (
-                      <span className="text-[10px] text-gray-400 dark:text-slate-500">
+                      <span className="text-[10px] text-gray-400 theme-dark:text-slate-500">
                         {reportImageStackItems.length} Bilder
                       </span>
                     )}
@@ -850,7 +850,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
                   {reportImageStackItems.length > 0 ? (
                     <ReportImageStack items={reportImageStackItems} className="w-full" />
                   ) : (
-                    <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                    <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 theme-dark:border-slate-700 theme-dark:bg-slate-900/60 theme-dark:text-slate-300">
                       Keine Bilder hochgeladen.
                     </p>
                   )}
@@ -860,27 +860,27 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
               <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr),minmax(0,1fr)]">
                 <div className="space-y-6">
                   <section className="space-y-4">
-                    <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 theme-dark:text-slate-400">
                       Überblick
                     </h2>
                     <div className="flex flex-wrap gap-2">
                       {metaCards.map((item) => (
                         <div
                           key={item.key}
-                          className="min-w-[140px] flex-1 rounded-xl border border-gray-200 bg-white/85 px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-green-500 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
+                          className="min-w-[140px] flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-green-500 hover:shadow-md theme-dark:border-slate-700 theme-dark:bg-slate-800/60"
                         >
-                          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 theme-dark:text-slate-400">
                             {item.label}
                           </p>
                           {item.href ? (
                             <Link
                               href={item.href}
-                              className="mt-0.5 block text-[13px] font-semibold text-gray-900 underline decoration-green-400 decoration-2 underline-offset-4 transition hover:text-green-700 dark:text-slate-100 dark:hover:text-sky-300"
+                              className="mt-0.5 block text-[13px] font-semibold text-gray-900 underline decoration-green-400 decoration-2 underline-offset-4 transition hover:text-green-700 theme-dark:text-slate-100 theme-dark:hover:text-sky-300"
                             >
                               {item.value}
                             </Link>
                           ) : (
-                            <p className="mt-0.5 text-[13px] font-semibold text-gray-900 dark:text-slate-100">
+                            <p className="mt-0.5 text-[13px] font-semibold text-gray-900 theme-dark:text-slate-100">
                               {item.value}
                             </p>
                           )}
@@ -891,7 +891,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
 
                   {setupItems.length > 0 && (
                     <section className="space-y-4">
-                      <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                      <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 theme-dark:text-slate-400">
                         Grow Setup
                       </h2>
                       <div className="grid gap-2 sm:grid-cols-3">
@@ -900,16 +900,16 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
                           return (
                             <div
                               key={item.key}
-                              className="flex items-start gap-2 rounded-xl border border-gray-200 bg-white/85 px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-green-500 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
+                              className="flex items-start gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-green-500 hover:shadow-md theme-dark:border-slate-700 theme-dark:bg-slate-900/70"
                             >
-                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600/10 text-green-700 dark:bg-sky-500/10 dark:text-sky-200">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600/10 text-green-700 theme-dark:bg-sky-500/10 theme-dark:text-sky-200">
                                 <Icon className="h-3.5 w-3.5" />
                               </div>
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 theme-dark:text-slate-400">
                                   {item.label}
                                 </p>
-                                <p className="text-[13px] font-semibold text-gray-900 dark:text-slate-100">
+                                <p className="text-[13px] font-semibold text-gray-900 theme-dark:text-slate-100">
                                   {item.value}
                                 </p>
                               </div>
@@ -922,33 +922,33 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
                 </div>
 
                 <section className="space-y-4">
-                  <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 theme-dark:text-slate-400">
                     Bewertungen
                   </h2>
                   <div className="space-y-4">
-                    <div className="rounded-2xl border border-green-200/60 bg-gradient-to-br from-green-50 via-white to-white px-4 py-4 shadow-sm dark:border-slate-700 dark:from-slate-900/80 dark:via-slate-900 dark:to-slate-900">
-                      <p className="text-[11px] uppercase tracking-wide text-green-600/80 dark:text-sky-300/90">
+                    <div className="rounded-2xl border border-green-200/60 bg-gradient-to-br from-green-50 via-white to-white px-4 py-4 shadow-sm theme-dark:border-slate-700 theme-dark:from-slate-900/80 theme-dark:via-slate-900 theme-dark:to-slate-900">
+                      <p className="text-[11px] uppercase tracking-wide text-green-600/80 theme-dark:text-sky-300/90">
                         {ratingEntries[0].label}
                       </p>
-                      <p className="text-xs text-green-700/80 dark:text-sky-300/80">
+                      <p className="text-xs text-green-700/80 theme-dark:text-sky-300/80">
                         {ratingEntries[0].description}
                       </p>
                       <div className="mt-3 flex items-center gap-3">
                         {renderStars(ratingEntries[0].value, ratingEntries[0].hint)}
                         <span
-                          className="text-lg font-bold text-green-700 dark:text-sky-200"
+                          className="text-lg font-bold text-green-700 theme-dark:text-sky-200"
                           title={ratingEntries[0].hint ?? undefined}
                         >
                           {ratingEntries[0].value > 0 ? ratingEntries[0].value.toFixed(1) : "–"}{" "}
-                          <span className="text-sm font-semibold text-green-600/70 dark:text-sky-300/80">/ 5</span>
+                          <span className="text-sm font-semibold text-green-600/70 theme-dark:text-sky-300/80">/ 5</span>
                         </span>
                       </div>
                       {ratingEntries[0].hint && ratingEntries[0].value > 0 && (
-                        <p className="mt-2 text-xs text-green-700/80 dark:text-sky-300/80">
+                        <p className="mt-2 text-xs text-green-700/80 theme-dark:text-sky-300/80">
                           {ratingEntries[0].hint}
                         </p>
                       )}
-                      <p className="mt-1 text-[10px] uppercase tracking-wide text-green-600/60 dark:text-sky-400/60">
+                      <p className="mt-1 text-[10px] uppercase tracking-wide text-green-600/60 theme-dark:text-sky-400/60">
                         1 ⭐ {ratingHintScale[ratingEntries[0].key]?.[0] ?? ratingHintScale.overall[0]} · 5 ⭐{' '}
                         {ratingHintScale[ratingEntries[0].key]?.[4] ?? ratingHintScale.overall[4]}
                       </p>
@@ -958,29 +958,29 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
                       {ratingEntries.slice(1).map((entry) => (
                         <div
                           key={entry.key}
-                          className="rounded-2xl border border-gray-200 bg-white/80 px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/70"
+                          className="rounded-2xl border border-gray-200 bg-white/80 px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md theme-dark:border-slate-700 theme-dark:bg-slate-900/70"
                         >
-                          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                          <p className="text-[11px] uppercase tracking-wide text-gray-500 theme-dark:text-slate-400">
                             {entry.label}
                           </p>
-                          <p className="text-xs text-gray-400 dark:text-slate-500">
+                          <p className="text-xs text-gray-400 theme-dark:text-slate-500">
                             {entry.description}
                           </p>
                           <div className="mt-2 flex items-center gap-2">
                             {renderStars(entry.value, entry.hint)}
                             <span
-                              className="text-sm font-semibold text-gray-900 dark:text-slate-100"
+                              className="text-sm font-semibold text-gray-900 theme-dark:text-slate-100"
                               title={entry.hint ?? undefined}
                             >
                               {entry.value > 0 ? entry.value.toFixed(1) : "–"}
                             </span>
                           </div>
                           {entry.hint && entry.value > 0 && (
-                            <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">
+                            <p className="mt-1 text-[11px] text-gray-400 theme-dark:text-slate-500">
                               {entry.hint}
                             </p>
                           )}
-                          <p className="mt-1 text-[10px] uppercase tracking-wide text-gray-400/80 dark:text-slate-500/80">
+                          <p className="mt-1 text-[10px] uppercase tracking-wide text-gray-400/80 theme-dark:text-slate-500/80">
                             1 ⭐ {ratingHintScale[entry.key]?.[0] ?? ratingHintScale.overall[0]} · 5 ⭐{' '}
                             {ratingHintScale[entry.key]?.[4] ?? ratingHintScale.overall[4]}
                           </p>
@@ -989,7 +989,7 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
                     </div>
 
                     {!hasRatings && (
-                      <p className="text-xs text-gray-400 dark:text-slate-500">
+                      <p className="text-xs text-gray-400 theme-dark:text-slate-500">
                         Noch keine Bewertungen vorhanden.
                       </p>
                     )}

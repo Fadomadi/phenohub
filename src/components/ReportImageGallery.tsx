@@ -190,10 +190,10 @@ const ReportImageGallery = ({
           <button
             type="button"
             onClick={() => handleOpen(coverImage)}
-            className="block w-full rounded-3xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/70"
+            className="block w-full rounded-3xl border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:shadow-lg theme-dark:border-slate-800 theme-dark:bg-slate-900/70"
             aria-label={`${coverImage.alt} vergrößert anzeigen`}
           >
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-slate-950">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100 theme-dark:bg-slate-950">
               <ProxyImage
                 src={resolveSource(coverImage)}
                 fallbackSrc={
@@ -207,8 +207,8 @@ const ReportImageGallery = ({
             </div>
           </button>
         ) : (
-          <div className="block w-full rounded-3xl border border-gray-200 bg-white p-4 text-left shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-slate-950">
+          <div className="block w-full rounded-3xl border border-gray-200 bg-white p-4 text-left shadow-sm theme-dark:border-slate-800 theme-dark:bg-slate-900/70">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100 theme-dark:bg-slate-950">
               <ProxyImage
                 src={resolveSource(coverImage)}
                 fallbackSrc={
@@ -227,7 +227,7 @@ const ReportImageGallery = ({
       {shouldRenderThumbnails && (
         <div className="space-y-4">
           {headingLabel && (
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
+            <h2 className="text-lg font-semibold text-gray-900 theme-dark:text-slate-100">
               {headingLabel}
             </h2>
           )}
@@ -238,7 +238,7 @@ const ReportImageGallery = ({
                   type="button"
                   onClick={() => handleOpen(image)}
                   key={`${image.direct}-${index}`}
-                  className="relative h-40 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 text-left transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/70"
+                  className="relative h-40 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 text-left transition hover:-translate-y-0.5 hover:shadow-lg theme-dark:border-slate-800 theme-dark:bg-slate-900/70"
                   aria-label={`${image.alt} vergrößert anzeigen`}
                 >
                   <ProxyImage
@@ -253,7 +253,7 @@ const ReportImageGallery = ({
               ) : (
                 <div
                   key={`${image.direct}-${index}`}
-                  className="relative h-40 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-slate-800 dark:bg-slate-900/70"
+                  className="relative h-40 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 theme-dark:border-slate-800 theme-dark:bg-slate-900/70"
                 >
                   <ProxyImage
                     src={resolveSource(image)}

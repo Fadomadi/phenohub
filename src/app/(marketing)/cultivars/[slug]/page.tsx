@@ -31,12 +31,20 @@ const fetchCultivarFromDatabase = async (slug: string) => {
       slug: true,
       aka: true,
       cloneOnly: true,
+      cutInfo: true,
       reportCount: true,
       avgRating: true,
       imageCount: true,
       trending: true,
       thumbnails: true,
       breeder: true,
+      description: true,
+      genetics: true,
+      flavorProfile: true,
+      aromaProfile: true,
+      floweringTime: true,
+      yieldPotential: true,
+      effectProfile: true,
       reports: {
         where: { status: "PUBLISHED" },
         orderBy: [
@@ -88,6 +96,8 @@ const fetchCultivarFromDatabase = async (slug: string) => {
     slug: cultivar.slug,
     aka: cultivar.aka ?? [],
     cloneOnly: Boolean(cultivar.cloneOnly),
+    cutInfo: typeof cultivar.cutInfo === "string" ? cultivar.cutInfo : null,
+    cutInfo: cultivar.cutInfo ?? null,
     reportCount: Number(cultivar.reportCount ?? 0),
     avgRating: Number(cultivar.avgRating ?? 0),
     imageCount: computedImageCount,
@@ -96,6 +106,13 @@ const fetchCultivarFromDatabase = async (slug: string) => {
       ? cultivar.thumbnails.filter((value): value is string => typeof value === "string")
       : [],
     breeder: cultivar.breeder ?? null,
+    description: cultivar.description ?? null,
+    genetics: cultivar.genetics ?? null,
+    flavorProfile: cultivar.flavorProfile ?? null,
+    aromaProfile: cultivar.aromaProfile ?? null,
+    floweringTime: cultivar.floweringTime ?? null,
+    yieldPotential: cultivar.yieldPotential ?? null,
+    effectProfile: cultivar.effectProfile ?? null,
     reports,
     previewImages,
   };
@@ -132,6 +149,14 @@ const fetchCultivarFallback = (slug: string) => {
     reports,
     previewImages,
     imageCount: computedImageCount,
+    description: cultivar.description ?? null,
+    genetics: cultivar.genetics ?? null,
+    flavorProfile: cultivar.flavorProfile ?? null,
+    aromaProfile: cultivar.aromaProfile ?? null,
+    floweringTime: cultivar.floweringTime ?? null,
+    yieldPotential: cultivar.yieldPotential ?? null,
+    effectProfile: cultivar.effectProfile ?? null,
+    cutInfo: cultivar.cutInfo ?? null,
   };
 };
 
@@ -191,6 +216,25 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
   const providerNames = Array.from(new Set(relatedReports.map((report) => report.provider))).filter(
     Boolean,
   );
+
+  const cultivarDetails = [
+    { label: "Genetik", value: cultivar.genetics },
+    { label: "Geschmack", value: cultivar.flavorProfile },
+    { label: "Aroma", value: cultivar.aromaProfile },
+    { label: "Blütezeit", value: cultivar.floweringTime },
+    { label: "Ertrag", value: cultivar.yieldPotential },
+    { label: "Effekt", value: cultivar.effectProfile },
+  ];
+
+  const readDetailValue = (value: string | null | undefined) => {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        return { text: trimmed, isPlaceholder: false };
+      }
+    }
+    return { text: "Noch keine Angabe", isPlaceholder: true };
+  };
 
   return (
     <div className="bg-gradient-to-b from-green-50 via-white to-white pb-16">
@@ -263,11 +307,39 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
                 </div>
               </div>
 
-              <p className="mt-6 text-sm leading-relaxed text-gray-600">
-                Für diesen Prototypen stammen alle Daten aus einem Mock-Datensatz.
-                Später erscheinen hier Genetik, Wuchsverhalten, Terpenprofil und
-                Setup-Empfehlungen basierend auf echten Berichten.
-              </p>
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {cultivarDetails.map((detail) => {
+                  const { text, isPlaceholder } = readDetailValue(detail.value);
+                  return (
+                    <div
+                      key={detail.label}
+                      className="rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm theme-dark:border-slate-800 theme-dark:bg-slate-900/60"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 theme-dark:text-slate-400">
+                        {detail.label}
+                      </p>
+                      <p
+                        className={`mt-2 text-sm leading-relaxed ${
+                          isPlaceholder
+                            ? "text-gray-400 italic theme-dark:text-slate-500"
+                            : "text-gray-900 theme-dark:text-slate-100"
+                        }`}
+                      >
+                        {text}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {cultivar.cutInfo && (
+                <div className="mt-4 rounded-2xl border border-green-100 bg-green-50/80 p-4 text-sm text-green-900 shadow-sm theme-dark:border-slate-700 theme-dark:bg-slate-900/70 theme-dark:text-slate-200">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700 theme-dark:text-sky-300">
+                    Cut-Info
+                  </p>
+                  <p className="mt-2 leading-relaxed">{cultivar.cutInfo}</p>
+                </div>
+              )}
             </div>
 
 
@@ -282,7 +354,7 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
                       className="w-full max-w-[232px] justify-items-center md:max-w-[256px] md:drop-shadow-xl"
                     />
                   ) : (
-                    <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                    <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-500 theme-dark:border-slate-700 theme-dark:bg-slate-900/60 theme-dark:text-slate-300">
                       Noch keine Bilder aus Community-Berichten vorhanden.
                     </p>
                   )}
@@ -311,11 +383,9 @@ const CultivarDetailPage = async ({ params }: CultivarPageProps) => {
               Beschreibung & Hinweise
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-gray-600">
-              Sobald echte Daten verfügbar sind, findest du hier Herkunft,
-              Genetik, typische Terpene, Stretch-Verhalten, empfohlenes
-              Setting (Topfgröße, EC/PH, Blütezeit) sowie Troubleshooting-Hinweise.
-              Aktuell dient dieser Bereich als Platzhalter, damit du siehst, wo
-              die Inhalte später landen.
+              {typeof cultivar.description === "string" && cultivar.description.trim().length > 0
+                ? cultivar.description.trim()
+                : "Noch keine ausführliche Beschreibung verfügbar. Sobald echte Community-Daten vorliegen, ergänzen wir hier Erfahrungswerte zu Wachstum, Training und Problemen im Grow."}
             </p>
           </section>
 

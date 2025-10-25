@@ -13,6 +13,13 @@ export type Cultivar = {
   recentImages?: string[];
   previewImages?: string[];
   breeder?: string | null;
+  description?: string | null;
+  genetics?: string | null;
+  flavorProfile?: string | null;
+  aromaProfile?: string | null;
+  floweringTime?: string | null;
+  yieldPotential?: string | null;
+  effectProfile?: string | null;
   offerings?: Array<{
     providerName: string;
     providerSlug: string;

@@ -51,14 +51,14 @@ const ReportCard = ({ report }: ReportCardProps) => {
     : null;
 
   return (
-    <div className="group overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-green-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-sky-500">
-      <div className="relative bg-gray-100 dark:bg-slate-900/70">
+    <div className="group overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-green-500 hover:shadow-md theme-dark:border-slate-800 theme-dark:bg-slate-900/80 theme-dark:hover:border-sky-500">
+      <div className="relative bg-gray-100 theme-dark:bg-slate-900/70">
         <Link
           href={`/reports/${report.id}`}
           className="block"
           aria-label={`${report.cultivar} Report öffnen`}
         >
-          <div className="relative aspect-square overflow-hidden rounded-b-none bg-green-100 dark:bg-slate-800">
+          <div className="relative aspect-square overflow-hidden rounded-b-none bg-green-100 theme-dark:bg-slate-800">
             {proxiedCurrentImage ? (
               <Image
                 src={proxiedCurrentImage}
@@ -113,11 +113,11 @@ const ReportCard = ({ report }: ReportCardProps) => {
               {report.overall}
             </span>
           </div>
-          <h3 className="mb-0.5 line-clamp-1 text-xs font-bold text-gray-900 transition-colors group-hover/link:text-green-600 dark:text-slate-100 dark:group-hover/link:text-sky-300">
+          <h3 className="mb-0.5 line-clamp-1 text-xs font-bold text-gray-900 transition-colors group-hover/link:text-green-600 theme-dark:text-slate-100 theme-dark:group-hover/link:text-sky-300">
             {report.cultivar}
           </h3>
         </Link>
-        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
+        <div className="flex items-center justify-between text-xs text-gray-500 theme-dark:text-slate-400">
           <ReportLikeToggle
             reportId={report.id}
             initialLiked={Boolean(report.liked)}

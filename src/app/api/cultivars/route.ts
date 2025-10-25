@@ -27,6 +27,13 @@ export async function GET() {
         aka: true,
         breeder: true,
         cutInfo: true,
+        description: true,
+        genetics: true,
+        flavorProfile: true,
+        aromaProfile: true,
+        floweringTime: true,
+        yieldPotential: true,
+        effectProfile: true,
       },
       orderBy: [{ name: "asc" }],
     });

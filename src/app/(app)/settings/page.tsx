@@ -236,7 +236,7 @@ const SettingsPage = () => {
                   <Link
                     key={report.id}
                     href={`/reports/${report.slug}`}
-                    className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:border-green-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                    className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:border-green-300 hover:shadow-md theme-dark:border-slate-800 theme-dark:bg-slate-900"
                   >
                     <div className="flex items-start gap-4">
                       {previewImage ? (

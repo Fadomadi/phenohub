@@ -44,6 +44,13 @@ type CultivarInput = {
   aka: string[];
   cloneOnly: boolean | null;
   cutInfo?: string | null;
+  description?: string | null;
+  genetics?: string | null;
+  flavorProfile?: string | null;
+  aromaProfile?: string | null;
+  floweringTime?: string | null;
+  yieldPotential?: string | null;
+  effectProfile?: string | null;
   reportCount: number;
   avgRating?: unknown;
   imageCount: number;
