@@ -90,14 +90,18 @@ const fetchCultivarFromDatabase = async (slug: string) => {
   const computedImageCount =
     previewImages.length > 0 ? previewImages.length : Number(cultivar.imageCount ?? 0);
 
+  const normalizedCutInfo =
+    typeof cultivar.cutInfo === "string" && cultivar.cutInfo.trim().length > 0
+      ? cultivar.cutInfo.trim()
+      : null;
+
   return {
     id: cultivar.id,
     name: cultivar.name,
     slug: cultivar.slug,
     aka: cultivar.aka ?? [],
     cloneOnly: Boolean(cultivar.cloneOnly),
-    cutInfo: typeof cultivar.cutInfo === "string" ? cultivar.cutInfo : null,
-    cutInfo: cultivar.cutInfo ?? null,
+    cutInfo: normalizedCutInfo,
     reportCount: Number(cultivar.reportCount ?? 0),
     avgRating: Number(cultivar.avgRating ?? 0),
     imageCount: computedImageCount,
@@ -122,6 +126,10 @@ const fetchCultivarFallback = (slug: string) => {
   const cultivar = mockCultivars.find((item) => item.slug === slug);
   if (!cultivar) return null;
 
+  const { cutInfo, ...rest } = cultivar;
+  const normalizedCutInfo =
+    typeof cutInfo === "string" && cutInfo.trim().length > 0 ? cutInfo : null;
+
   const reports = mockReports
     .filter((report) => report.cultivarSlug === slug)
     .slice(0, 12)
@@ -145,7 +153,7 @@ const fetchCultivarFallback = (slug: string) => {
     previewImages.length > 0 ? previewImages.length : Number(cultivar.imageCount ?? 0);
 
   return {
-    ...cultivar,
+    ...rest,
     reports,
     previewImages,
     imageCount: computedImageCount,
@@ -156,7 +164,7 @@ const fetchCultivarFallback = (slug: string) => {
     floweringTime: cultivar.floweringTime ?? null,
     yieldPotential: cultivar.yieldPotential ?? null,
     effectProfile: cultivar.effectProfile ?? null,
-    cutInfo: cultivar.cutInfo ?? null,
+    cutInfo: normalizedCutInfo,
   };
 };
 
